@@ -5,7 +5,8 @@ export default function HomePage() {
     <main className="min-h-screen bg-white text-zinc-950">
       {/* Hero */}
       <section className="border-b border-zinc-200">
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-16 md:grid-cols-12 md:py-24">
+        {/* Reduced vertical padding so content starts higher */}
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-8 md:grid-cols-12 md:py-12">
           <div className="md:col-span-7">
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight md:text-6xl">
               Win your case.
@@ -265,3 +266,4 @@ export default function HomePage() {
     </main>
   );
 }
+

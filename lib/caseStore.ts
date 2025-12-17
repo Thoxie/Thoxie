@@ -1,21 +1,31 @@
 // lib/caseStore.ts
 
-export type IntakePack =
-  | "first_filing"
-  | "hearing_prep"
-  | "declaration_draft";
+export type IntakePack = "first_filing" | "hearing_prep" | "declaration_draft";
 
-export type FamilyLawRole =
-  | "Petitioner"
-  | "Respondent"
-  | "Other/Not sure";
+export type FamilyLawRole = "Petitioner" | "Respondent" | "Other/Not sure";
+
+export type EvidenceSide = "mine" | "other_party";
+export type EvidenceKind = "file" | "text";
 
 export type EvidenceItem = {
   id: string;
-  fileName: string;
+
+  // Helps users keep things straight
+  side: EvidenceSide;
+  kind: EvidenceKind;
+
+  // If kind === "file"
+  fileName?: string;
   fileType?: string;
+  fileSize?: number;
+  dbKey?: string; // IndexedDB key
+
+  // If kind === "text"
+  textTitle?: string;
+  textBody?: string;
+
   notes?: string;
-  issueTags?: string[];
+  issueTags?: string[]; // e.g., ["custody", "support"]
   createdAtIso: string;
 };
 
@@ -33,12 +43,11 @@ export type CaseIntake = {
   // Hearing info
   hasHearing: boolean;
   hearingDateIso?: string;
-  hearingType?: string;
 
-  // User intent
+  // Optional “one sentence objective”
   helpSummary?: string;
 
-  // Evidence (metadata only for now)
+  // Evidence list (metadata + text, files stored in IndexedDB)
   evidence: EvidenceItem[];
 };
 
@@ -63,3 +72,4 @@ export function saveCase(caseData: CaseIntake) {
 export function newId(prefix = "id") {
   return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now()}`;
 }
+

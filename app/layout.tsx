@@ -16,31 +16,32 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-white text-zinc-950">
         <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
             {/* LOGO ONLY — NO TEXT */}
             <Link href="/" className="flex items-center gap-4">
               <Image
                 src="/thoxie-logo.png.png"
                 alt="THOXIE"
-                width={360}
-                height={120}
+                width={480}
+                height={160}
                 priority
-                className="h-20 w-auto"
+                className="h-24 w-auto"
               />
               <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700">
                 California
               </span>
             </Link>
 
+            {/* NAV — NO THOXIE WORD ANYWHERE */}
             <nav className="hidden items-center gap-6 text-sm text-zinc-700 md:flex">
               <Link href="/#win" className="hover:text-zinc-950">
                 Win your case
               </Link>
               <Link href="/#compare" className="hover:text-zinc-950">
-                THOXIE vs Attorney
+                Compare to Attorney
               </Link>
               <Link href="/#flow" className="hover:text-zinc-950">
-                Go with the flow
+                How it works
               </Link>
               <Link href="/#pricing" className="hover:text-zinc-950">
                 Pricing
@@ -62,7 +63,7 @@ export default function RootLayout({
               </Link>
               <Link
                 href="/signup"
-                className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
+                className="rounded-lg bg-zinc-950 px-5 py-3 text-sm font-semibold text-white hover:bg-zinc-800"
               >
                 Start Free
               </Link>
@@ -82,5 +83,4 @@ export default function RootLayout({
     </html>
   );
 }
-
 

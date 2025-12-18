@@ -1,35 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { CA_COUNTIES, countyToCourtFinderUrl } from "@/lib/caCounties";
 import {
   CaseIntake,
+  EducationLevel,
+  EmploymentStatus,
   EvidenceItem,
   EvidenceKind,
   EvidenceSide,
   FamilyLawRole,
-  IntakePack,
+  IncomeRange,
+  IntakeTask,
   loadCase,
   newId,
   saveCase,
 } from "@/lib/caseStore";
-
-const PACKS: { id: IntakePack; title: string; subtitle: string }[] = [
-  { id: "first_filing", title: "Start a Divorce (First Filing)", subtitle: "Get organized before you file anything." },
-  { id: "hearing_prep", title: "Prepare for a Hearing", subtitle: "Talking points, evidence checklist, and timeline." },
-  { id: "declaration_draft", title: "Draft a Declaration", subtitle: "Facts outline + exhibit placeholders." },
-];
-
-const ISSUE_TAGS = [
-  { id: "custody", label: "Custody / Timeshare" },
-  { id: "support", label: "Support (Child/Spousal)" },
-  { id: "property", label: "Property / Real estate" },
-  { id: "debt", label: "Debt" },
-  { id: "disclosure", label: "Financial disclosure" },
-  { id: "enforcement", label: "Enforcement / contempt" },
-  { id: "dvro", label: "DVRO related" },
-] as const;
 
 // ---------- IndexedDB (files) ----------
 const DB_NAME = "thoxie_evidence_db";
@@ -41,9 +28,7 @@ function openDb(): Promise<IDBDatabase> {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) {
-        db.createObjectStore(STORE);
-      }
+      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -85,21 +70,110 @@ async function idbDel(key: string) {
 }
 // --------------------------------------
 
+const TASKS: { id: IntakeTask; title: string; subtitle: string }[] = [
+  {
+    id: "start_divorce",
+    title: "Start a Divorce (I’m filing first)",
+    subtitle: "You are starting the case. You have not been served papers.",
+  },
+  {
+    id: "respond_papers",
+    title: "Respond to Divorce Papers (I was served)",
+    subtitle: "You received court papers and need to reply.",
+  },
+  {
+    id: "prepare_hearing",
+    title: "Prepare for a Court Hearing",
+    subtitle: "You have a court date coming up and want to be ready.",
+  },
+  {
+    id: "written_statement",
+    title: "Explain Your Side to the Judge (Written Statement)",
+    subtitle: "You need to put facts in writing for the court.",
+  },
+  {
+    id: "triage",
+    title: "Help me figure out what to do",
+    subtitle: "Answer a few questions and THOXIE will guide you.",
+  },
+];
+
+const ISSUE_TAGS = [
+  { id: "children", label: "Children (custody / parenting time)" },
+  { id: "support", label: "Support (child / spousal)" },
+  { id: "property", label: "Property / debts" },
+  { id: "safety", label: "Safety / restraining order" },
+  { id: "other", label: "Other / not sure" },
+] as const;
+
+const EDUCATION: EducationLevel[] = [
+  "Less than high school",
+  "High school / GED",
+  "Some college",
+  "College degree",
+  "Graduate degree",
+];
+
+const EMPLOYMENT: EmploymentStatus[] = [
+  "Employed (office / professional)",
+  "Employed (hourly / shift-based)",
+  "Self-employed",
+  "Not currently working",
+  "Retired",
+];
+
+const INCOME: IncomeRange[] = [
+  "Under $50,000",
+  "$50,000–$100,000",
+  "$100,000–$200,000",
+  "Over $200,000",
+  "Prefer not to say",
+];
+
+function labelForTask(t: IntakeTask) {
+  switch (t) {
+    case "start_divorce":
+      return "Start a Divorce";
+    case "respond_papers":
+      return "Respond to Divorce Papers";
+    case "prepare_hearing":
+      return "Prepare for a Court Hearing";
+    case "written_statement":
+      return "Written Statement for the Judge";
+    case "triage":
+      return "Help me figure it out";
+  }
+}
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
 export default function SignupPage() {
   const existing = useMemo(() => loadCase(), []);
 
-  const [pack, setPack] = useState<IntakePack>(existing?.pack ?? "first_filing");
+  // Task
+  const [task, setTask] = useState<IntakeTask>(existing?.task ?? "start_divorce");
+
+  // Basics
   const [county, setCounty] = useState(existing?.county ?? "");
-  const [role, setRole] = useState<FamilyLawRole>(existing?.role ?? "Respondent");
+  const [role, setRole] = useState<FamilyLawRole>(existing?.role ?? "Petitioner");
   const [hasHearing, setHasHearing] = useState<boolean>(existing?.hasHearing ?? false);
   const [hearingDate, setHearingDate] = useState(existing?.hearingDateIso ?? "");
 
-  // This is now explicitly optional and NOT the main interaction.
+  // Demographics
+  const [education, setEducation] = useState<EducationLevel | "">(existing?.education ?? "");
+  const [employment, setEmployment] = useState<EmploymentStatus | "">(existing?.employment ?? "");
+  const [income, setIncome] = useState<IncomeRange | "">(existing?.income ?? "");
+
+  // Issues
+  const [issues, setIssues] = useState<string[]>(existing?.issues ?? []);
+
+  // Optional objective
   const [helpSummary, setHelpSummary] = useState(existing?.helpSummary ?? "");
 
+  // Evidence
   const [evidence, setEvidence] = useState<EvidenceItem[]>(existing?.evidence ?? []);
-
-  // Evidence form controls
   const [evSide, setEvSide] = useState<EvidenceSide>("mine");
   const [evKind, setEvKind] = useState<EvidenceKind>("file");
   const [evNotes, setEvNotes] = useState("");
@@ -109,67 +183,118 @@ export default function SignupPage() {
   const [evFiles, setEvFiles] = useState<FileList | null>(null);
   const [evBusy, setEvBusy] = useState(false);
 
-  // AI chat
+  // Triage (2–4 Qs)
+  const [triageServed, setTriageServed] = useState<"yes" | "no" | "">("");
+  const [triageReceived, setTriageReceived] = useState<"divorce" | "hearing" | "statement" | "not_sure" | "">("");
+  const [triageCourtDate, setTriageCourtDate] = useState<"yes" | "no" | "">("");
+  const [triageIssue, setTriageIssue] = useState<string>("");
+
+  // AI panel (proactive guidance + quick actions + chat)
   const [chatInput, setChatInput] = useState("");
-  const [chatLog, setChatLog] = useState<{ who: "ai" | "user"; text: string }[]>([
-    { who: "ai", text: "Tell me what you’re preparing (first filing, hearing, or declaration) and your California county." },
-  ]);
+  const [chatLog, setChatLog] = useState<{ who: "ai" | "user"; text: string }[]>([]);
   const [chatBusy, setChatBusy] = useState(false);
 
-  const courtLink = useMemo(() => (county ? countyToCourtFinderUrl(county) : ""), [county]);
+  // Refs to scroll
+  const basicsRef = useRef<HTMLDivElement | null>(null);
+  const evidenceRef = useRef<HTMLDivElement | null>(null);
 
-  const canSave =
-    county.trim().length > 0 &&
-    (pack !== "hearing_prep" || !hasHearing || hearingDate);
+  const courtLink = useMemo(() => (county ? countyToCourtFinderUrl(county) : ""), [county]);
 
   function persist(updatedEvidence: EvidenceItem[] = evidence) {
     const payload: CaseIntake = {
       id: existing?.id ?? newId("case"),
-      createdAtIso: existing?.createdAtIso ?? new Date().toISOString(),
-      pack,
+      createdAtIso: existing?.createdAtIso ?? nowIso(),
+      task,
       county,
       role,
       hasHearing,
       hearingDateIso: hearingDate || undefined,
       helpSummary: helpSummary.trim() || undefined,
+      education: education || undefined,
+      employment: employment || undefined,
+      income: income || undefined,
+      issues: issues.length ? issues : undefined,
       evidence: updatedEvidence,
     };
     saveCase(payload);
   }
 
-  async function saveAndContinue() {
-    persist(evidence);
-    alert("Case saved. Next step: we’ll generate packs from your saved case + evidence.");
+  function isDemographicsComplete() {
+    return Boolean(education) && Boolean(employment);
   }
 
-  async function sendChat() {
-    if (!chatInput.trim() || chatBusy) return;
+  function basicsComplete() {
+    if (!county) return false;
+    if (!isDemographicsComplete()) return false;
+    if (task === "prepare_hearing" && hasHearing && !hearingDate) return false;
+    return true;
+  }
 
-    const message = chatInput.trim();
-    setChatInput("");
-    setChatBusy(true);
-    setChatLog((l) => [...l, { who: "user", text: message }]);
+  function stepIndex(): 1 | 2 | 3 {
+    if (!basicsComplete()) return 1;
+    if (evidence.length === 0) return 2;
+    return 3;
+  }
 
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          context: { pack, county, role, hasHearing, hearingDate },
-        }),
-      });
+  // Proactive “ASK THOXIE” messages based on state (no waiting)
+  useEffect(() => {
+    const msgs: string[] = [];
 
-      const json = await res.json();
-      setChatLog((l) => [...l, { who: "ai", text: json.reply }]);
-    } catch {
-      setChatLog((l) => [...l, { who: "ai", text: "Error connecting to AI. Try again." }]);
-    } finally {
-      setChatBusy(false);
+    // Task selected
+    msgs.push(`You selected: ${labelForTask(task)}.`);
+
+    // If triage, guide triage first
+    if (task === "triage") {
+      msgs.push("Answer the questions below. I will guide you to the right task.");
+    } else {
+      // Step guidance
+      const s = stepIndex();
+      msgs.push(`Step ${s} of 3: ${s === 1 ? "Basics" : s === 2 ? "Add evidence" : "Next steps"}.`);
     }
+
+    // Task-specific guidance
+    if (task === "start_divorce") {
+      if (!county) msgs.push("First: choose your California county.");
+      else if (!isDemographicsComplete()) msgs.push("Next: answer the education and employment questions so I can tailor guidance.");
+      else if (issues.length === 0) msgs.push("Next: select what issues apply (children, support, property, safety).");
+      else msgs.push("Next: add your key documents. If you only add 3 items, add court papers, financial basics, and messages that support your key points.");
+    }
+
+    if (task === "respond_papers") {
+      if (!county) msgs.push("First: choose your California county.");
+      else if (!isDemographicsComplete()) msgs.push("Next: answer education and employment so I can explain steps at the right level.");
+      else msgs.push("Next: upload what the other party filed (their papers). That is the best place to start.");
+    }
+
+    if (task === "prepare_hearing") {
+      if (!county) msgs.push("First: choose your California county.");
+      else if (!isDemographicsComplete()) msgs.push("Next: answer education and employment so I can keep instructions clear and simple.");
+      else if (hasHearing && !hearingDate) msgs.push("Next: enter your hearing date.");
+      else msgs.push("Next: upload the papers related to your hearing and any messages or documents that support your main points.");
+    }
+
+    if (task === "written_statement") {
+      msgs.push("A written statement is a clear explanation of what happened, in your own words.");
+      msgs.push("Examples: explaining your side, responding to claims, supporting a hearing or request.");
+      if (!county) msgs.push("First: choose your California county.");
+      else if (!isDemographicsComplete()) msgs.push("Next: answer education and employment so I can write at the right level.");
+      else msgs.push("Next: upload or paste the documents/messages you want to refer to.");
+    }
+
+    // Set the AI “guide” content as the first messages (replace, don’t endlessly add)
+    setChatLog((prev) => {
+      const userMsgs = prev.filter((m) => m.who === "user"); // keep user questions if any
+      const aiGuide = msgs.map((t) => ({ who: "ai" as const, text: t }));
+      return [...aiGuide, ...userMsgs].slice(0, 12);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task, county, education, employment, issues, evidence.length, hasHearing, hearingDate]);
+
+  function toggleIssue(id: string) {
+    setIssues((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
-  function toggleTag(tag: string) {
+  function toggleEvTag(tag: string) {
     setEvTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   }
 
@@ -192,7 +317,7 @@ export default function SignupPage() {
           textBody: evTextBody,
           notes: evNotes.trim() || undefined,
           issueTags: evTags.length ? evTags : undefined,
-          createdAtIso: new Date().toISOString(),
+          createdAtIso: nowIso(),
         });
         setEvTextTitle("");
         setEvTextBody("");
@@ -213,7 +338,7 @@ export default function SignupPage() {
             type: file.type,
             size: file.size,
             blob: file,
-            savedAtIso: new Date().toISOString(),
+            savedAtIso: nowIso(),
           });
 
           newItems.push({
@@ -226,11 +351,10 @@ export default function SignupPage() {
             dbKey,
             notes: evNotes.trim() || undefined,
             issueTags: evTags.length ? evTags : undefined,
-            createdAtIso: new Date().toISOString(),
+            createdAtIso: nowIso(),
           });
         }
         setEvFiles(null);
-        // reset the input visually by clearing state; browser keeps file picker UI, that’s okay
       }
 
       const updated = [...evidence, ...newItems];
@@ -268,13 +392,86 @@ export default function SignupPage() {
   async function deleteEvidence(item: EvidenceItem) {
     if (!confirm("Delete this evidence item?")) return;
 
-    if (item.kind === "file" && item.dbKey) {
-      await idbDel(item.dbKey);
-    }
+    if (item.kind === "file" && item.dbKey) await idbDel(item.dbKey);
 
     const updated = evidence.filter((e) => e.id !== item.id);
     setEvidence(updated);
     persist(updated);
+  }
+
+  function saveCaseNow() {
+    persist(evidence);
+    alert("Saved.");
+  }
+
+  function scrollToBasics() {
+    basicsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function scrollToEvidence() {
+    evidenceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  // If triage answers are complete, route to a task
+  useEffect(() => {
+    if (task !== "triage") return;
+
+    // Need at least Q1
+    if (!triageServed) return;
+
+    if (triageServed === "no") {
+      // If not served, usually start divorce
+      setTask("start_divorce");
+      return;
+    }
+
+    // served === yes
+    if (!triageReceived) return;
+
+    if (triageReceived === "divorce") setTask("respond_papers");
+    else if (triageReceived === "hearing") setTask("prepare_hearing");
+    else if (triageReceived === "statement") setTask("written_statement");
+    else setTask("respond_papers");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task, triageServed, triageReceived]);
+
+  async function sendChat() {
+    if (!chatInput.trim() || chatBusy) return;
+
+    const message = chatInput.trim();
+    setChatInput("");
+    setChatBusy(true);
+    setChatLog((l) => [...l, { who: "user", text: message }]);
+
+    // Keep this endpoint, but keep the product focus in the UI and prompts.
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          context: {
+            task,
+            county,
+            role,
+            hasHearing,
+            hearingDate,
+            education,
+            employment,
+            income,
+            issues,
+            evidenceCount: evidence.length,
+          },
+        }),
+      });
+
+      const json = await res.json();
+      setChatLog((l) => [...l, { who: "ai", text: json.reply }]);
+    } catch {
+      setChatLog((l) => [...l, { who: "ai", text: "Error connecting. Try again." }]);
+    } finally {
+      setChatBusy(false);
+    }
   }
 
   return (
@@ -284,34 +481,133 @@ export default function SignupPage() {
         <section className="lg:col-span-7">
           <h1 className="text-3xl font-extrabold">Start Free</h1>
           <p className="mt-2 text-sm text-zinc-700">
-            Family Law · California · Not a law firm · No legal advice
+            California Family Law · Not a law firm · No legal advice
           </p>
 
-          {/* Pack selection */}
-          <div className="mt-8 space-y-3">
-            {PACKS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setPack(p.id)}
-                className={`w-full rounded-2xl border p-4 text-left ${
-                  pack === p.id ? "bg-zinc-950 text-white" : "border-zinc-200 bg-white hover:bg-zinc-50"
-                }`}
-              >
-                <div className="font-semibold">{p.title}</div>
-                <div className="text-sm opacity-80">{p.subtitle}</div>
-              </button>
-            ))}
+          {/* STEP 1: Task */}
+          <div className="mt-8 rounded-2xl border border-zinc-200 p-6">
+            <div className="text-sm font-semibold">Step 1 of 3 — Choose what you need to do</div>
+            <div className="mt-1 text-xs text-zinc-600">
+              Pick the option that matches what you’re trying to get done today.
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {TASKS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTask(t.id)}
+                  className={`w-full rounded-2xl border p-4 text-left ${
+                    task === t.id ? "bg-zinc-950 text-white" : "border-zinc-200 bg-white hover:bg-zinc-50"
+                  }`}
+                >
+                  <div className="font-semibold">{t.title}</div>
+                  <div className="text-sm opacity-80">{t.subtitle}</div>
+                  {t.id === "written_statement" && (
+                    <div className="mt-2 text-xs opacity-80">
+                      Examples: explaining your side · responding to claims · supporting a hearing or request
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {task === "triage" && (
+              <div className="mt-6 rounded-2xl border border-zinc-200 p-4">
+                <div className="text-sm font-semibold">Quick questions</div>
+                <div className="mt-2 text-xs text-zinc-600">
+                  Answer these and THOXIE will route you to the right task.
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <div className="text-xs font-semibold">Have you already received court papers from the other party?</div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => setTriageServed("yes")}
+                        className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                          triageServed === "yes" ? "bg-zinc-950 text-white" : "border bg-white"
+                        }`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setTriageServed("no")}
+                        className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                          triageServed === "no" ? "bg-zinc-950 text-white" : "border bg-white"
+                        }`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+
+                  {triageServed === "yes" && (
+                    <div>
+                      <div className="text-xs font-semibold">What did you receive?</div>
+                      <select
+                        value={triageReceived}
+                        onChange={(e) => setTriageReceived(e.target.value as any)}
+                        className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
+                      >
+                        <option value="">Select one…</option>
+                        <option value="divorce">Divorce papers</option>
+                        <option value="hearing">A request for a hearing</option>
+                        <option value="statement">A written statement</option>
+                        <option value="not_sure">Not sure</option>
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="text-xs font-semibold">Do you have a court date scheduled right now?</div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => setTriageCourtDate("yes")}
+                        className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                          triageCourtDate === "yes" ? "bg-zinc-950 text-white" : "border bg-white"
+                        }`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setTriageCourtDate("no")}
+                        className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                          triageCourtDate === "no" ? "bg-zinc-950 text-white" : "border bg-white"
+                        }`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-semibold">What is the main issue involved? (optional)</div>
+                    <input
+                      value={triageIssue}
+                      onChange={(e) => setTriageIssue(e.target.value)}
+                      placeholder="Example: custody, support, property"
+                      className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Case basics */}
-          <div className="mt-6 rounded-2xl border border-zinc-200 p-6">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* STEP 2: Basics + demographics */}
+          <div ref={basicsRef} className="mt-6 rounded-2xl border border-zinc-200 p-6">
+            <div className="text-sm font-semibold">Step 2 of 3 — Case basics</div>
+            <div className="mt-1 text-xs text-zinc-600">
+              Fill these in first. THOXIE uses them to guide you.
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <label>
                 <div className="text-xs font-semibold">County</div>
                 <select
                   value={county}
                   onChange={(e) => setCounty(e.target.value)}
-                  className="mt-2 w-full rounded-xl border px-3 py-2"
+                  className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
                 >
                   <option value="">Select a county…</option>
                   {CA_COUNTIES.map((c) => (
@@ -335,7 +631,7 @@ export default function SignupPage() {
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as FamilyLawRole)}
-                  className="mt-2 w-full rounded-xl border px-3 py-2"
+                  className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
                 >
                   <option value="Petitioner">Petitioner</option>
                   <option value="Respondent">Respondent</option>
@@ -344,86 +640,164 @@ export default function SignupPage() {
               </label>
             </div>
 
-            {/* Hearing */}
+            <div className="mt-6 rounded-2xl border border-zinc-200 p-4">
+              <div className="text-sm font-semibold">About you (required)</div>
+              <div className="mt-1 text-xs text-zinc-600">
+                This helps THOXIE explain steps clearly and at the right level.
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label>
+                  <div className="text-xs font-semibold">Education level</div>
+                  <select
+                    value={education}
+                    onChange={(e) => setEducation(e.target.value as any)}
+                    className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
+                  >
+                    <option value="">Select…</option>
+                    {EDUCATION.map((x) => (
+                      <option key={x} value={x}>
+                        {x}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <div className="text-xs font-semibold">Employment</div>
+                  <select
+                    value={employment}
+                    onChange={(e) => setEmployment(e.target.value as any)}
+                    className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
+                  >
+                    <option value="">Select…</option>
+                    {EMPLOYMENT.map((x) => (
+                      <option key={x} value={x}>
+                        {x}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-4">
+                <label>
+                  <div className="text-xs font-semibold">Household income (optional)</div>
+                  <select
+                    value={income}
+                    onChange={(e) => setIncome(e.target.value as any)}
+                    className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
+                  >
+                    <option value="">Select…</option>
+                    {INCOME.map((x) => (
+                      <option key={x} value={x}>
+                        {x}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
             <div className="mt-6">
               <div className="text-sm font-semibold">Do you have a hearing scheduled?</div>
-              <div className="mt-3 flex gap-3">
+              <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => setHasHearing(true)}
-                  className={`rounded-xl px-4 py-2 ${hasHearing ? "bg-zinc-950 text-white" : "border bg-white"}`}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                    hasHearing ? "bg-zinc-950 text-white" : "border bg-white"
+                  }`}
                 >
                   Yes
                 </button>
                 <button
                   onClick={() => setHasHearing(false)}
-                  className={`rounded-xl px-4 py-2 ${!hasHearing ? "bg-zinc-950 text-white" : "border bg-white"}`}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                    !hasHearing ? "bg-zinc-950 text-white" : "border bg-white"
+                  }`}
                 >
                   No
                 </button>
               </div>
 
               {hasHearing && (
-                <input
-                  type="date"
-                  value={hearingDate}
-                  onChange={(e) => setHearingDate(e.target.value)}
-                  className="mt-3 rounded-xl border px-3 py-2"
-                />
+                <div className="mt-3">
+                  <div className="text-xs font-semibold">Hearing date</div>
+                  <input
+                    type="date"
+                    value={hearingDate}
+                    onChange={(e) => setHearingDate(e.target.value)}
+                    className="mt-2 rounded-xl border px-3 py-2 text-sm"
+                  />
+                </div>
               )}
             </div>
 
-            {/* Optional objective */}
+            <div className="mt-6">
+              <div className="text-sm font-semibold">What issues apply? (select all that apply)</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {ISSUE_TAGS.map((x) => (
+                  <button
+                    key={x.id}
+                    type="button"
+                    onClick={() => toggleIssue(x.id)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                      issues.includes(x.id) ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-300 bg-white hover:bg-zinc-50"
+                    }`}
+                  >
+                    {x.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <label className="mt-6 block">
-              <div className="text-xs font-semibold">Optional: One-sentence objective (saved to your case)</div>
+              <div className="text-xs font-semibold">Optional: Your one-sentence goal (saved)</div>
               <div className="mt-1 text-xs text-zinc-600">
-                Use the AI chat panel for the real conversation. This field is just a saved “case objective.”
+                Use ASK THOXIE for questions. This is just a saved goal for your case.
               </div>
               <textarea
                 rows={3}
                 value={helpSummary}
                 onChange={(e) => setHelpSummary(e.target.value)}
-                placeholder="Example: I want a clean hearing prep pack for custody and I need my facts/evidence organized."
-                className="mt-2 w-full rounded-xl border px-3 py-2"
+                placeholder="Example: I’m filing first and I want a simple checklist and the first forms I need."
+                className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
               />
             </label>
 
-            <div className="mt-6 flex items-center gap-4">
+            <div className="mt-6 flex items-center gap-3">
               <button
-                disabled={!canSave}
-                onClick={saveAndContinue}
-                className={`rounded-xl px-6 py-3 font-semibold ${
-                  canSave ? "bg-zinc-950 text-white" : "bg-zinc-200 text-zinc-500"
-                }`}
+                onClick={saveCaseNow}
+                className="rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800"
               >
-                Save & Continue
+                Save
               </button>
-
+              <button
+                onClick={scrollToEvidence}
+                className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-zinc-50"
+              >
+                Next: Add evidence
+              </button>
               <Link href="/" className="text-sm underline">
                 Back to home
               </Link>
             </div>
           </div>
 
-          {/* Evidence Vault */}
-          <div className="mt-6 rounded-2xl border border-zinc-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold">Evidence Vault</div>
-                <div className="mt-1 text-xs text-zinc-600">
-                  Upload files or paste text. Label as “Yours” vs “Other party.” Stored locally on this device (Phase 1).
-                </div>
-              </div>
-              <div className="text-xs text-zinc-600">Items: {evidence.length}</div>
+          {/* STEP 3: Evidence */}
+          <div ref={evidenceRef} className="mt-6 rounded-2xl border border-zinc-200 p-6">
+            <div className="text-sm font-semibold">Step 3 of 3 — Add your evidence</div>
+            <div className="mt-1 text-xs text-zinc-600">
+              Upload files or paste text. Label it clearly so THOXIE can help you use it.
             </div>
 
-            {/* Evidence add form */}
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <label>
-                <div className="text-xs font-semibold">Source</div>
+                <div className="text-xs font-semibold">Which side is this from?</div>
                 <select
                   value={evSide}
                   onChange={(e) => setEvSide(e.target.value as EvidenceSide)}
-                  className="mt-2 w-full rounded-xl border px-3 py-2"
+                  className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
                 >
                   <option value="mine">Your documents</option>
                   <option value="other_party">Other party documents</option>
@@ -431,14 +805,14 @@ export default function SignupPage() {
               </label>
 
               <label>
-                <div className="text-xs font-semibold">Type</div>
+                <div className="text-xs font-semibold">What are you adding?</div>
                 <select
                   value={evKind}
                   onChange={(e) => setEvKind(e.target.value as EvidenceKind)}
-                  className="mt-2 w-full rounded-xl border px-3 py-2"
+                  className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
                 >
                   <option value="file">Upload file(s)</option>
-                  <option value="text">Paste text (email, notes, messages)</option>
+                  <option value="text">Paste text (email, messages, notes)</option>
                 </select>
               </label>
             </div>
@@ -447,7 +821,7 @@ export default function SignupPage() {
               <div className="mt-4">
                 <div className="text-xs font-semibold">Upload files</div>
                 <div className="mt-1 text-xs text-zinc-600">
-                  Supports PDF, Word, images, TXT. (Stored locally via IndexedDB)
+                  PDF, Word, images, TXT. Saved on this device (Phase 1).
                 </div>
                 <input
                   type="file"
@@ -464,7 +838,7 @@ export default function SignupPage() {
                   <input
                     value={evTextTitle}
                     onChange={(e) => setEvTextTitle(e.target.value)}
-                    placeholder="Example: Email thread re pickup refusal"
+                    placeholder="Example: Email thread about parenting schedule"
                     className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
                   />
                 </label>
@@ -474,7 +848,7 @@ export default function SignupPage() {
                   <textarea
                     value={evTextBody}
                     onChange={(e) => setEvTextBody(e.target.value)}
-                    placeholder="Paste email text, message thread, notes…"
+                    placeholder="Paste email text, messages, notes…"
                     rows={6}
                     className="mt-2 w-full rounded-xl border px-3 py-2 text-sm"
                   />
@@ -489,7 +863,7 @@ export default function SignupPage() {
                   <button
                     key={t.id}
                     type="button"
-                    onClick={() => toggleTag(t.id)}
+                    onClick={() => toggleEvTag(t.id)}
                     className={`rounded-full border px-3 py-1 text-xs font-semibold ${
                       evTags.includes(t.id) ? "border-zinc-950 bg-zinc-950 text-white" : "border-zinc-300 bg-white hover:bg-zinc-50"
                     }`}
@@ -518,18 +892,17 @@ export default function SignupPage() {
                   evBusy ? "bg-zinc-200 text-zinc-500" : "bg-zinc-950 text-white hover:bg-zinc-800"
                 }`}
               >
-                {evBusy ? "Saving…" : "Add to Evidence Vault"}
+                {evBusy ? "Saving…" : "Add evidence"}
               </button>
-              <div className="text-xs text-zinc-600">Saved to this device only (Phase 1).</div>
+              <div className="text-xs text-zinc-600">Items saved: {evidence.length}</div>
             </div>
 
-            {/* Evidence list */}
             <div className="mt-6 rounded-2xl border border-zinc-200 p-4">
               <div className="text-sm font-semibold">Saved evidence</div>
 
               {evidence.length === 0 ? (
                 <div className="mt-2 text-sm text-zinc-600">
-                  No evidence saved yet. Upload files or paste text above.
+                  No evidence yet. Upload files or paste text above.
                 </div>
               ) : (
                 <div className="mt-3 space-y-2">
@@ -538,9 +911,7 @@ export default function SignupPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-sm font-semibold">
-                            {item.kind === "file"
-                              ? item.fileName
-                              : item.textTitle || "Pasted text"}
+                            {item.kind === "file" ? item.fileName : item.textTitle || "Pasted text"}
                           </div>
                           <div className="mt-1 text-xs text-zinc-600">
                             {item.side === "mine" ? "Your documents" : "Other party documents"} ·{" "}
@@ -549,15 +920,6 @@ export default function SignupPage() {
                               : "text"}
                           </div>
                           {item.notes && <div className="mt-1 text-xs text-zinc-700">Notes: {item.notes}</div>}
-                          {item.issueTags?.length ? (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {item.issueTags.map((t) => (
-                                <span key={t} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700">
-                                  {t}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
                         </div>
 
                         <div className="flex shrink-0 flex-col gap-2">
@@ -595,25 +957,68 @@ export default function SignupPage() {
               )}
             </div>
           </div>
+
+          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900">
+            <span className="font-semibold">Important:</span> THOXIE is not a law firm and does not provide legal advice.
+            It is a legal support and preparation tool.
+          </div>
         </section>
 
-        {/* RIGHT — AI */}
+        {/* RIGHT — ASK THOXIE (Always visible / sticky) */}
         <aside className="lg:col-span-5">
-          <div className="sticky top-28 rounded-2xl border border-zinc-200 p-6">
-            <div className="font-semibold">THOXIE AI</div>
-            <div className="mt-1 text-xs text-zinc-600">Main interaction lives here.</div>
+          <div className="sticky top-24 rounded-2xl border border-zinc-200 p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold">ASK THOXIE</div>
+                <div className="mt-1 text-xs text-zinc-600">
+                  I guide you step by step. I focus on your legal task.
+                </div>
+              </div>
+
+              <div className="text-right text-xs text-zinc-600">
+                <div className="font-semibold">Progress</div>
+                <div>Step {stepIndex()} / 3</div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={scrollToBasics}
+                className="rounded-xl border border-zinc-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-zinc-50"
+              >
+                Go to basics
+              </button>
+              <button
+                onClick={scrollToEvidence}
+                className="rounded-xl border border-zinc-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-zinc-50"
+              >
+                Go to evidence
+              </button>
+              <button
+                onClick={saveCaseNow}
+                className="rounded-xl border border-zinc-300 bg-white px-3 py-1 text-xs font-semibold hover:bg-zinc-50"
+              >
+                Save
+              </button>
+            </div>
 
             <div className="mt-4 h-[420px] overflow-auto rounded-xl border p-3">
-              {chatLog.map((m, i) => (
-                <div
-                  key={i}
-                  className={`mb-2 rounded-xl px-3 py-2 text-sm ${
-                    m.who === "ai" ? "bg-zinc-50" : "bg-zinc-950 text-white"
-                  }`}
-                >
-                  {m.text}
+              {chatLog.length === 0 ? (
+                <div className="text-sm text-zinc-600">
+                  Start by selecting a task on the left.
                 </div>
-              ))}
+              ) : (
+                chatLog.map((m, i) => (
+                  <div
+                    key={i}
+                    className={`mb-2 rounded-xl px-3 py-2 text-sm ${
+                      m.who === "ai" ? "bg-zinc-50" : "bg-zinc-950 text-white"
+                    }`}
+                  >
+                    {m.text}
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="mt-4 flex gap-2">
@@ -621,20 +1026,20 @@ export default function SignupPage() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendChat()}
-                placeholder="Ask THOXIE…"
-                className="flex-1 rounded-xl border px-3 py-2"
+                placeholder="Ask a case-prep question…"
+                className="flex-1 rounded-xl border px-3 py-2 text-sm"
               />
               <button
                 onClick={sendChat}
                 disabled={chatBusy}
-                className="rounded-xl bg-zinc-950 px-4 py-2 text-white"
+                className="rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white"
               >
                 Send
               </button>
             </div>
 
             <div className="mt-3 text-xs text-zinc-600">
-              Phase 1 chat is a stub response. Next we connect real AI that can reference your saved case + evidence.
+              Tip: If you were served papers, upload what the other party filed under “Other party documents.”
             </div>
           </div>
         </aside>
@@ -642,7 +1047,3 @@ export default function SignupPage() {
     </main>
   );
 }
-
-
-
-

@@ -1,12 +1,8 @@
 // PATH: app/api/chat/route.ts
 /**
- * THOXIE Chat API (OpenAI-backed)
- *
- * - Server-side only (API key never goes to the browser)
- * - Accepts optional conversation history for a real back-and-forth discussion
- * - Returns: { reply: string, timestamp: string }
- *
- * Note: THOXIE is a decision-support tool, not a law firm.
+ * THOXIE Chat API (LIVE OpenAI)
+ * Returns { reply, timestamp }
+ * Reply always starts with "LIVE-AI:" so you can verify it’s not the stub.
  */
 
 import OpenAI from "openai";
@@ -14,9 +10,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 type HistoryItem = {
   role: "user" | "assistant" | "system";
@@ -29,7 +23,7 @@ type ChatBody = {
   history?: HistoryItem[];
 };
 
-function safeString(v: unknown): string {
+function asString(v: unknown) {
   return typeof v === "string" ? v : "";
 }
 
@@ -39,7 +33,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           reply:
-            "Server misconfiguration: OPENAI_API_KEY is missing. Add it to .env.local (local) and Vercel Environment Variables (production).",
+            "LIVE-AI: Server missing OPENAI_API_KEY. Add it to .env.local and Vercel env vars.",
           timestamp: new Date().toISOString(),
         },
         { status: 500 }
@@ -53,7 +47,7 @@ export async function POST(req: Request) {
       body = {};
     }
 
-    const message = safeString(body.message).trim();
+    const message = asString(body.message).trim();
     const context =
       body?.context && typeof body.context === "object" ? body.context : {};
     const historyRaw = Array.isArray(body.history) ? body.history : [];
@@ -61,12 +55,11 @@ export async function POST(req: Request) {
     if (!message) {
       return NextResponse.json({
         reply:
-          "Ask me your legal question and include your California county and what you’re trying to accomplish. I’ll ask follow-ups and we’ll work it through step-by-step.",
+          "LIVE-AI: Ask your legal question. Include county + what you want to accomplish. I’ll answer and then ask follow-ups.",
         timestamp: new Date().toISOString(),
       });
     }
 
-    // Keep history bounded.
     const history = historyRaw
       .filter(
         (h) =>
@@ -75,20 +68,16 @@ export async function POST(req: Request) {
           typeof h.content === "string" &&
           h.content.trim().length > 0
       )
-      .slice(-16);
+      .slice(-20);
 
     const model = (process.env.OPENAI_MODEL || "gpt-5").trim();
 
     const instructions =
-      "You are THOXIE, a legal decision-support assistant for California family law. " +
-      "You are not a law firm and you do not provide legal advice. " +
-      "You help users understand options, prep filings, organize evidence, and plan next steps. " +
-      "Be direct, practical, and collaborative. Ask clarifying questions when needed. " +
-      "Do NOT refuse to help just because the topic is legal—provide preparation guidance and strategy options. " +
-      "If a user asks for something that requires a licensed attorney, say so and provide safer alternatives.";
+      "You are THOXIE, a California family-law decision-support assistant. " +
+      "Not a law firm; no legal advice. " +
+      "You CAN discuss legal questions by giving strategy options, preparation steps, and drafting guidance. " +
+      "Ask clarifying questions and propose next steps. Be direct and practical.";
 
-    // Role-based input arrays preserve conversation state.
-    // (Supported by the OpenAI Responses API.)
     const input: HistoryItem[] = [
       {
         role: "system",
@@ -97,8 +86,8 @@ export async function POST(req: Request) {
           JSON.stringify(
             {
               ...context,
-              policy:
-                "Decision-support only; no legal advice; California family law focus.",
+              disclaimer:
+                "Decision-support only; not legal advice; California focus.",
             },
             null,
             2
@@ -114,18 +103,16 @@ export async function POST(req: Request) {
       input,
     });
 
-    const reply = (resp.output_text || "").trim();
+    const replyText = (resp.output_text || "").trim();
 
     return NextResponse.json({
-      reply:
-        reply ||
-        "I didn’t generate a response. Try rephrasing your question and include the county + what outcome you want.",
+      reply: `LIVE-AI: ${replyText || "No text returned. Ask again."}`,
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
     return NextResponse.json(
       {
-        reply: `Chat error: ${err?.message ?? "Unknown error"}`,
+        reply: `LIVE-AI: Chat error: ${err?.message ?? "Unknown error"}`,
         timestamp: new Date().toISOString(),
       },
       { status: 500 }

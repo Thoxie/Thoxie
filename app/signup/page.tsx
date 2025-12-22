@@ -241,7 +241,6 @@ export default function SignupPage() {
 
   // Proactive “ASK THOXIE” messages based on state (no waiting)
   useEffect(() => {
-    // Seed intro if empty
     if (chatLog.length > 0) return;
 
     const s = stepIndex();
@@ -269,7 +268,7 @@ export default function SignupPage() {
       {
         who: "ai",
         text:
-          "Nice. You’re in a good place to generate an action plan and a first draft. Ask me what to file next, what to say, or what exhibits matter most.",
+          "Nice. Ask me your legal question. I’ll answer and then ask follow-up questions so we can work it through like a real discussion.",
       },
     ]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -403,9 +402,17 @@ export default function SignupPage() {
     if (!chatInput.trim() || chatBusy) return;
 
     const message = chatInput.trim();
+
+    // Build a bounded history for a real discussion (last 12 messages).
+    const nextHistory = [...chatLog, { who: "user" as const, text: message }];
+    const historyToSend = nextHistory.slice(-12).map((m) => ({
+      role: m.who === "user" ? ("user" as const) : ("assistant" as const),
+      content: m.text,
+    }));
+
     setChatInput("");
     setChatBusy(true);
-    setChatLog((l) => [...l, { who: "user", text: message }]);
+    setChatLog(nextHistory);
 
     try {
       const res = await fetch("/api/chat", {
@@ -413,6 +420,7 @@ export default function SignupPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message,
+          history: historyToSend,
           context: {
             task,
             county,
@@ -434,7 +442,7 @@ export default function SignupPage() {
         const msg =
           typeof json?.reply === "string" && json.reply.trim()
             ? json.reply.trim()
-            : "Server error. Try again.";
+            : `Server error (${res.status}).`;
         throw new Error(msg);
       }
 
@@ -760,118 +768,4 @@ export default function SignupPage() {
 
               <div className="mt-4 space-y-3">
                 {evidence.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-zinc-200 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-semibold">{item.title}</div>
-                        <div className="mt-1 text-xs text-zinc-600">
-                          Side: {item.side} · Type: {item.kind}
-                          {item.tags?.length ? ` · Tags: ${item.tags.join(", ")}` : ""}
-                        </div>
-                        {item.notes ? (
-                          <div className="mt-2 text-xs text-zinc-700">{item.notes}</div>
-                        ) : null}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {item.kind === "file" ? (
-                          <button
-                            onClick={() => downloadEvidenceFile(item)}
-                            className="rounded-xl border border-zinc-200 px-3 py-2 text-xs hover:bg-zinc-50"
-                          >
-                            Download
-                          </button>
-                        ) : null}
-                        <button
-                          onClick={() => deleteEvidence(item)}
-                          className="rounded-xl border border-zinc-200 px-3 py-2 text-xs hover:bg-zinc-50"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-
-                    {item.kind === "text" && item.text ? (
-                      <pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap rounded-xl bg-zinc-50 p-3 text-xs text-zinc-800">
-                        {item.text}
-                      </pre>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* RIGHT: ASK THOXIE */}
-        <aside className="lg:col-span-5">
-          <div className="sticky top-6 rounded-2xl border border-zinc-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold">ASK THOXIE</div>
-                <div className="mt-1 text-xs text-zinc-600">
-                  Decision-support · No legal advice · California family law
-                </div>
-              </div>
-              <div className="text-xs text-zinc-600">
-                Step {stepIndex()} / 3
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-2xl bg-zinc-50 p-4">
-              <div className="text-xs font-semibold text-zinc-700">Context</div>
-              <div className="mt-2 space-y-1 text-xs text-zinc-700">
-                <div>Task: {labelForTask(task)}</div>
-                <div>County: {county || "—"}</div>
-                <div>Role: {role}</div>
-                <div>Evidence: {evidence.length}</div>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              <div className="max-h-80 overflow-auto rounded-2xl border border-zinc-200 bg-white p-3">
-                {chatLog.length ? (
-                  <div className="space-y-3">
-                    {chatLog.map((m, i) => (
-                      <div key={i} className="text-sm">
-                        <div className="text-[10px] uppercase tracking-wide text-zinc-500">
-                          {m.who === "ai" ? "THOXIE" : "You"}
-                        </div>
-                        <div className="mt-1 whitespace-pre-wrap text-sm text-zinc-900">{m.text}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-xs text-zinc-600">Ask a question to begin.</div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") sendChat();
-                  }}
-                  placeholder="Ask THOXIE…"
-                  className="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm"
-                />
-                <button
-                  onClick={sendChat}
-                  disabled={chatBusy || !chatInput.trim()}
-                  className="rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  {chatBusy ? "…" : "Send"}
-                </button>
-              </div>
-
-              <div className="text-[11px] text-zinc-600">
-                THOXIE provides decision-support and preparation help. It does not provide legal advice.
-              </div>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </main>
-  );
-}
+                  <div key={item.id} className="rounded-2xl border bor

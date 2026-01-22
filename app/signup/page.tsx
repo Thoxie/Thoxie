@@ -19,6 +19,7 @@ import {
   saveCase,
 } from "@/lib/caseStore";
 import { loadCaseType } from "@/lib/caseTypes";
+import { loadDvro } from "@/lib/dvroStore";
 
 // ---------- IndexedDB (files) ----------
 const DB_NAME = "thoxie_evidence_db";
@@ -267,6 +268,44 @@ export default function SignupFlow() {
     setEvidence((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
   }
 
+  function buildChatContext() {
+    const caseType = loadCaseType();
+
+    const base = {
+      caseType,
+      task,
+      county,
+      role,
+      hasHearing,
+      hearingDate,
+      education,
+      employment,
+      income,
+      issues,
+      evidenceCount: evidence.length,
+    } as Record<string, any>;
+
+    // ✅ Step 3: If DVRO, auto-attach DVRO intake snapshot to context
+    if (caseType === "dvro") {
+      const dvro = loadDvro();
+      if (dvro) {
+        base.dvro = {
+          county: dvro.county,
+          role: dvro.role,
+          stage: dvro.stage,
+          hasChildrenInCommon: dvro.hasChildrenInCommon,
+          hearingDateIso: dvro.hearingDateIso || "",
+          incidentDateIso: dvro.incidentDateIso || "",
+          incidentSummary: dvro.incidentSummary || "",
+          requests: dvro.requests || [],
+          requestOtherText: dvro.requestOtherText || "",
+        };
+      }
+    }
+
+    return base;
+  }
+
   async function onChatSend() {
     if (!chatInput.trim() || chatBusy) return;
 
@@ -290,19 +329,7 @@ export default function SignupFlow() {
         body: JSON.stringify({
           message,
           history: historyToSend,
-          context: {
-            caseType: loadCaseType(), // ✅ NEW: drives DVRO/family-law guardrails
-            task,
-            county,
-            role,
-            hasHearing,
-            hearingDate,
-            education,
-            employment,
-            income,
-            issues,
-            evidenceCount: evidence.length,
-          },
+          context: buildChatContext(),
         }),
       });
 
@@ -665,4 +692,5 @@ export default function SignupFlow() {
     </main>
   );
 }
+
 

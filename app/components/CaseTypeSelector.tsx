@@ -15,6 +15,21 @@ type Props = {
   variant?: "desktop" | "mobile";
 };
 
+function routeForCaseType(caseType: CaseTypeId) {
+  switch (caseType) {
+    case "dvro":
+      return "/dvro";
+    case "family_law":
+      return "/case";
+    // placeholders for future case types (we’ll build these one-by-one)
+    case "ud":
+    case "small_claims":
+    case "limited_civil":
+    default:
+      return "/case";
+  }
+}
+
 export default function CaseTypeSelector({ variant = "desktop" }: Props) {
   const router = useRouter();
   const [caseType, setCaseType] = useState<CaseTypeId>(DEFAULT_CASE_TYPE);
@@ -26,7 +41,7 @@ export default function CaseTypeSelector({ variant = "desktop" }: Props) {
   function onChange(next: CaseTypeId) {
     setCaseType(next);
     saveCaseType(next);
-    router.push("/case");
+    router.push(routeForCaseType(next));
   }
 
   const wrapClass =

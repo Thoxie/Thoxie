@@ -4,10 +4,7 @@
  * Used by UI, API, and AI guardrails
  */
 
-export const CASE_TYPES = [
-  "FAMILY_LAW",
-  "DVRO",
-] as const;
+export const CASE_TYPES = ["FAMILY_LAW", "DVRO"] as const;
 
 export type CaseTypeId = (typeof CASE_TYPES)[number];
 

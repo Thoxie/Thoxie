@@ -1,76 +1,49 @@
-// PATH: app/components/CaseTypeSelector.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  CASE_TYPES,
-  DEFAULT_CASE_TYPE,
-  type CaseTypeId,
-  loadCaseType,
-  saveCaseType,
-} from "@/lib/caseTypes";
+// PATH: components/CaseTypeSelector.tsx
 
-type Props = {
-  variant?: "desktop" | "mobile";
-};
+import { useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
-function routeForCaseType(caseType: CaseTypeId) {
-  switch (caseType) {
-    case "dvro":
-      return "/dvro";
-    case "family_law":
-      return "/case";
-    // placeholders for future case types (we’ll build these one-by-one)
-    case "ud":
-    case "small_claims":
-    case "limited_civil":
-    default:
-      return "/case";
-  }
+type CaseType = "family" | "dvro";
+
+function guessCaseType(pathname: string): CaseType {
+  if (pathname.startsWith("/dvro")) return "dvro";
+  if (pathname.startsWith("/case")) return "family";
+  return "family";
 }
 
-export default function CaseTypeSelector({ variant = "desktop" }: Props) {
+export default function CaseTypeSelector({
+  compact = false,
+}: {
+  compact?: boolean;
+}) {
+  const pathname = usePathname() || "/";
   const router = useRouter();
-  const [caseType, setCaseType] = useState<CaseTypeId>(DEFAULT_CASE_TYPE);
 
-  useEffect(() => {
-    setCaseType(loadCaseType());
-  }, []);
-
-  function onChange(next: CaseTypeId) {
-    setCaseType(next);
-    saveCaseType(next);
-    router.push(routeForCaseType(next));
-  }
-
-  const wrapClass =
-    variant === "mobile"
-      ? "flex w-full items-center gap-2"
-      : "hidden items-center gap-2 md:flex";
-
-  const selectClass =
-    variant === "mobile"
-      ? "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900"
-      : "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900";
+  const value = useMemo(() => guessCaseType(pathname), [pathname]);
 
   return (
-    <div className={wrapClass}>
-      <span className="text-xs font-medium text-zinc-600 whitespace-nowrap">
-        Case:
-      </span>
+    <label
+      className={
+        "flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-700 shadow-sm" +
+        (compact ? " w-full justify-between" : "")
+      }
+    >
+      <span className={compact ? "" : "hidden lg:inline"}>Case Type</span>
       <select
-        className={selectClass}
-        value={caseType}
-        onChange={(e) => onChange(e.target.value as CaseTypeId)}
+        className="bg-transparent text-sm font-medium text-zinc-900 outline-none"
+        value={value}
+        onChange={(e) => {
+          const v = e.target.value as CaseType;
+          router.push(v === "dvro" ? "/dvro" : "/case");
+        }}
         aria-label="Select case type"
       >
-        {CASE_TYPES.map((ct) => (
-          <option key={ct.id} value={ct.id}>
-            {ct.label}
-          </option>
-        ))}
+        <option value="family">Family Law</option>
+        <option value="dvro">DVRO (Domestic Violence)</option>
       </select>
-    </div>
+    </label>
   );
 }
+

@@ -1,4 +1,4 @@
-// lib/caCounties.ts
+// PATH: lib/caCounties.ts
 
 export const CA_COUNTIES: string[] = [
   "Alameda",
@@ -61,6 +61,13 @@ export const CA_COUNTIES: string[] = [
   "Yuba"
 ];
 
-export function getCaCounties(): string[] {
-  return [...CA_COUNTIES];
+/**
+ * Simple helper used by the intake UI.
+ * Returns California Courts "Find My Court" page with a query.
+ */
+export function countyToCourtFinderUrl(county: string): string {
+  const q = encodeURIComponent((county || "").trim());
+  return q
+    ? `https://www.courts.ca.gov/find-my-court.htm?query=${q}`
+    : "https://www.courts.ca.gov/find-my-court.htm";
 }

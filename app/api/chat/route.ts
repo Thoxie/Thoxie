@@ -16,27 +16,27 @@ type HistoryItem = {
 type Body = {
   message?: string;
   history?: HistoryItem[];
+  caseType?: string;
 };
 
 function normalizeGuardrailsResult(
-  res: any,
+  res: unknown,
 ): { allowed: boolean; reason?: string; systemPreamble?: string } {
-  // If guardrails returns void (old signature), treat as allowed.
+  // If guardrails returns void (or nothing), treat as allowed.
   if (res === undefined || res === null) return { allowed: true };
 
-  // If guardrails returns a boolean (rare), normalize.
-  if (typeof res === "boolean") return { allowed: res };
-
-  // If guardrails returns an object (preferred), use it.
+  // If guardrails returns an object, use it.
   if (typeof res === "object") {
+    const r: any = res;
     return {
-      allowed: res.allowed !== false,
-      reason: typeof res.reason === "string" ? res.reason : undefined,
+      allowed: r.allowed !== false,
+      reason: typeof r.reason === "string" ? r.reason : undefined,
       systemPreamble:
-        typeof res.systemPreamble === "string" ? res.systemPreamble : undefined,
+        typeof r.systemPreamble === "string" ? r.systemPreamble : undefined,
     };
   }
 
+  // Default allow.
   return { allowed: true };
 }
 
@@ -49,10 +49,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing message" }, { status: 400 });
     }
 
-    const guardrailsRaw = (enforceGuardrails as any)({ message, caseType: "family" });
-    const { allowed, reason, systemPreamble } = normalizeGuardrailsResult(
-      guardrailsRaw,
-    );
+    // Guardrails: supports both (void) and (object) return signatures.
+    const guardrailsRaw = (enforceGuardrails as any)({
+      message,
+      caseType: body.caseType ?? "family",
+    });
+    const { allowed, reason, systemPreamble } =
+      normalizeGuardrailsResult(guardrailsRaw);
 
     if (!allowed) {
       return NextResponse.json(

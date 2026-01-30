@@ -18,68 +18,49 @@ type HistoryItem = {
   content: string;
 };
 
-type ChatBody = {
+type Body = {
   message?: string;
-  context?: Record<string, any>;
   history?: HistoryItem[];
+  caseType?: string;
 };
-
-function asString(v: unknown) {
-  return typeof v === "string" ? v : "";
-}
 
 export async function POST(req: Request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
+    const body = (await req.json()) as Body;
+
+    const message = (body.message ?? "").toString().trim();
+    if (!message) {
+      return NextResponse.json({ error: "Missing message" }, { status: 400 });
+    }
+
+    const { allowed, reason, systemPreamble } = enforceGuardrails({
+      message,
+      caseType: body.caseType ?? "family",
+    });
+
+    if (!allowed) {
       return NextResponse.json(
         {
-          reply:
-            "LIVE-AI: Server missing OPENAI_API_KEY. Add it in Vercel → Settings → Environment Variables.",
+          reply: `LIVE-AI: ${reason ?? "Request blocked by guardrails."}`,
           timestamp: new Date().toISOString(),
         },
-        { status: 500 }
+        { status: 200 },
       );
     }
 
-    let body: ChatBody = {};
-    try {
-      body = (await req.json()) as ChatBody;
-    } catch {
-      body = {};
-    }
-
-    const message = asString(body.message).trim();
-    const historyRaw = Array.isArray(body.history) ? body.history : [];
-
-    if (!message) {
-      return NextResponse.json(
-        { reply: "LIVE-AI: Missing message.", timestamp: new Date().toISOString() },
-        { status: 400 }
-      );
-    }
-
-    // Family-law only restore target: enforce guardrails without DVRO module routing.
-    enforceGuardrails(message, { module: "family" });
-
-    const history: HistoryItem[] = historyRaw
-      .filter((h) => h && typeof h === "object")
-      .map((h: any) => ({
-        role: h.role,
-        content: asString(h.content),
-      }))
-      .filter(
-        (h) =>
-          (h.role === "user" || h.role === "assistant" || h.role === "system") &&
-          h.content.trim().length > 0
-      );
+    const history = Array.isArray(body.history) ? body.history : [];
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       {
         role: "system",
         content:
-          "You are THOXIE. Provide structured, neutral legal decision-support guidance. Do not claim to be a lawyer, and do not provide legal representation.",
+          systemPreamble ??
+          "You are THOXIE, a legal decision-support assistant. Provide structured, neutral guidance and do not provide legal representation.",
       },
-      ...history.map((h) => ({ role: h.role, content: h.content })),
+      ...history.map((h) => ({
+        role: h.role,
+        content: h.content,
+      })),
       { role: "user", content: message },
     ];
 
@@ -89,22 +70,20 @@ export async function POST(req: Request) {
       temperature: 0.2,
     });
 
-    const content =
-      completion.choices?.[0]?.message?.content?.trim() || "(no response)";
-
-    const reply = content.startsWith("LIVE-AI:") ? content : `LIVE-AI: ${content}`;
+    const reply =
+      completion.choices?.[0]?.message?.content?.trim() ?? "LIVE-AI: (no response)";
 
     return NextResponse.json({
-      reply,
+      reply: reply.startsWith("LIVE-AI:") ? reply : `LIVE-AI: ${reply}`,
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
     return NextResponse.json(
       {
-        reply: `LIVE-AI: Server error: ${err?.message ?? String(err)}`,
-        timestamp: new Date().toISOString(),
+        error: "Server error",
+        details: err?.message ?? String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

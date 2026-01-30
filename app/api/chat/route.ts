@@ -1,56 +1,27 @@
-// PATH: app/api/chat/route.ts
-/**
- * THOXIE Chat API (LIVE OpenAI)
- * Returns { reply, timestamp }
- * Reply always starts with "LIVE-AI:" so you can verify it’s not the stub.
- */
-
-import OpenAI from "openai";
+// app/api/chat/route.ts
 import { NextResponse } from "next/server";
+
+export const runtime = "edge";
+
+type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const message = (body?.message ?? "").toString().trim();
+    const messages = (body?.messages || []) as ChatMessage[];
 
-    if (!message) {
-      return NextResponse.json(
-        { reply: "LIVE-AI: Please type a message.", timestamp: Date.now() },
-        { status: 200 }
-      );
-    }
+    // Minimal placeholder route (older version). Prevents runtime errors without adding DVRO logic.
+    // If you want the OpenAI-backed version restored later, tell me and I’ll give the next batch accordingly.
+    const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
 
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+    return NextResponse.json({
+      ok: true,
+      reply: `Received: ${lastUser}`.slice(0, 800),
     });
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are THOXIE, a family-law decision-support assistant. You are not a law firm. Provide practical next steps, neutral phrasing, and options. Avoid giving legal advice. Ask clarifying questions when needed.",
-        },
-        { role: "user", content: message },
-      ],
-      temperature: 0.2,
-    });
-
-    const reply =
-      completion.choices?.[0]?.message?.content?.trim() ||
-      "LIVE-AI: I couldn’t generate a response. Please try again.";
-
-    return NextResponse.json({ reply: `LIVE-AI: ${reply}`, timestamp: Date.now() });
-  } catch (err: any) {
-    return NextResponse.json(
-      {
-        reply:
-          "LIVE-AI: Server error. Check OPENAI_API_KEY and try again.",
-        timestamp: Date.now(),
-        error: err?.message || "unknown_error",
-      },
-      { status: 500 }
-    );
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e?.message ?? "Unknown error" }, { status: 400 });
   }
 }

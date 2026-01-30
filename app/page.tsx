@@ -1,33 +1,32 @@
-// PATH: app/case/page.tsx
+// PATH: app/page.tsx
 "use client";
 
 import Link from "next/link";
+import CaseTypeSelector from "@/components/CaseTypeSelector";
 
-export default function CasePage() {
+export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-3xl px-6 py-12">
-        <div className="flex items-start justify-between">
+      <div className="mx-auto max-w-5xl px-6 py-14">
+        <div className="flex items-start justify-between gap-6">
           <div>
-            <h1 className="text-2xl font-semibold text-neutral-900">
-              Family Law
+            <h1 className="text-4xl font-semibold tracking-tight text-neutral-900">
+              THOXIE
             </h1>
-            <p className="mt-2 text-sm text-neutral-700">
-              Family law intake and preparation will be built here.
+            <p className="mt-3 max-w-2xl text-neutral-700">
+              Legal decision support and preparation.
             </p>
           </div>
 
           <Link
-            href="/"
-            className="rounded-md border border-neutral-300 px-3 py-2 text-sm hover:bg-neutral-50"
+            href="/signup"
+            className="rounded-md border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-50"
           >
-            Home
+            Sign up
           </Link>
         </div>
 
-        <div className="mt-8 rounded-xl border border-neutral-200 p-6 text-sm text-neutral-700">
-          This is the restored baseline. No DVRO. No advanced intake yet.
-        </div>
+        <CaseTypeSelector />
       </div>
     </main>
   );

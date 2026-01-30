@@ -1,60 +1,84 @@
+// app/page.tsx
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useCaseStore } from "@/lib/caseStore";
+import { CA_COUNTIES } from "@/lib/caCounties";
+
+type ChatMessage = { role: "user" | "assistant"; content: string };
+
+const STORAGE_KEY = "thoxie_familylaw_chat_v1";
+
+function formatCurrencyUSD(n: number) {
+  if (!Number.isFinite(n)) return "";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+}
 
 export default function HomePage() {
-  return (
-    <main className="min-h-screen bg-white text-zinc-950">
-      {/* Hero */}
-      <section className="border-b border-zinc-200">
-        <div className="mx-auto max-w-6xl px-4 py-16">
-          <h1 className="text-4xl font-bold tracking-tight">
-            THOXIE — Family-law decision support
-          </h1>
-          <p className="mt-4 max-w-2xl text-zinc-700">
-            Organize facts, understand options, prep drafts, and build a clean record.
-            Not a law firm.
-          </p>
+  const caseStore = useCaseStore();
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/case"
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-white hover:bg-zinc-800"
-            >
-              Start a Case
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-lg border border-zinc-300 px-4 py-2 hover:bg-zinc-50"
-            >
-              Go to Dashboard
-            </Link>
-          </div>
-        </div>
-      </section>
+  // Chat state
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-      {/* Sections */}
-      <section className="mx-auto max-w-6xl px-4 py-12 grid gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-zinc-200 p-6">
-          <h2 className="font-semibold">Explain Your Side</h2>
-          <p className="mt-2 text-sm text-zinc-700">
-            Timeline + key facts + exhibits, organized for declarations.
-          </p>
-        </div>
+  // Intake state
+  const [county, setCounty] = useState(caseStore.county || "San Mateo");
+  const [caseStage, setCaseStage] = useState(caseStore.caseStage || "Early / just starting");
+  const [children, setChildren] = useState(caseStore.children ?? "No");
+  const [marriageYears, setMarriageYears] = useState(caseStore.marriageYears ?? "");
+  const [petitioner, setPetitioner] = useState(caseStore.petitioner ?? "Not sure");
+  const [income, setIncome] = useState(caseStore.income ?? "");
+  const [assetsApprox, setAssetsApprox] = useState(caseStore.assetsApprox ?? "");
+  const [priority, setPriority] = useState(caseStore.priority ?? "Protect assets / fair division");
+  const [notes, setNotes] = useState(caseStore.notes ?? "");
 
-        <div className="rounded-xl border border-zinc-200 p-6">
-          <h2 className="font-semibold">Prepare for Hearings</h2>
-          <p className="mt-2 text-sm text-zinc-700">
-            Checklist style prep so you don’t miss deadlines or documents.
-          </p>
-        </div>
+  const counties = useMemo(() => CA_COUNTIES, []);
 
-        <div className="rounded-xl border border-zinc-200 p-6">
-          <h2 className="font-semibold">Draft Outputs</h2>
-          <p className="mt-2 text-sm text-zinc-700">
-            Clean, neutral drafts you can edit and file.
-          </p>
-        </div>
-      </section>
-    </main>
-  );
-}
+  useEffect(() => {
+    // Load chat history
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as ChatMessage[];
+        if (Array.isArray(parsed)) setMessages(parsed);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    // Persist chat history
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {
+      // ignore
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    // persist intake to store
+    caseStore.setCounty(county);
+    caseStore.setCaseStage(caseStage);
+    caseStore.setChildren(children);
+    caseStore.setMarriageYears(marriageYears);
+    caseStore.setPetitioner(petitioner);
+    caseStore.setIncome(income);
+    caseStore.setAssetsApprox(assetsApprox);
+    caseStore.setPriority(priority);
+    caseStore.setNotes(notes);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [county, caseStage, children, marriageYears, petitioner, income, assetsApprox, priority, notes]);
+
+  async function sendMessage() {
+    const trimmed = input.trim();
+    if (!trimmed || isSending) return;
+
+    setApiError(null);
+    setIsSending(true);
+
+    const nextMessages: ChatMessage[] = [...messages, { role: "user", content: trimmed }];
 

@@ -230,6 +230,287 @@ export default function Signup() {
   async function removeEvidence(item: EvidenceItem) {
     const key = `${caseId}:${item.id}`;
     await idbDel(key);
-    setEvidence((prev) => prev.filter((e) =>
+    setEvidence((prev) => prev.filter((e) => e.id !== item.id));
+  }
+
+  function updateEvidence(itemId: string, patch: Partial<EvidenceItem>) {
+    setEvidence((prev) =>
+      prev.map((e) => (e.id === itemId ? { ...e, ...patch } : e))
+    );
+  }
+
+  const courtFinder = useMemo(() => countyToCourtFinderUrl(county), [county]);
+
+  if (!loaded) {
+    return (
+      <main className="min-h-screen bg-white p-10 text-zinc-900">
+        Loading…
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-white text-zinc-950">
+      <section className="border-b border-zinc-200">
+        <div className="mx-auto max-w-6xl px-6 py-12">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">Start</h1>
+              <p className="mt-2 text-zinc-700">
+                Tell THOXIE what you’re doing. Upload evidence if you have it.
+              </p>
+            </div>
+            <Link
+              href="/"
+              className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-semibold hover:bg-zinc-50"
+            >
+              Home
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-12 md:grid-cols-12">
+        {/* Left: Intake */}
+        <div className="md:col-span-7">
+          <div className="rounded-2xl border border-zinc-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">What are you doing?</h2>
+
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {TASKS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTask(t.id)}
+                  className={[
+                    "rounded-xl border px-4 py-3 text-left text-sm",
+                    task === t.id
+                      ? "border-zinc-950 bg-zinc-950 text-white"
+                      : "border-zinc-300 bg-white hover:bg-zinc-50",
+                  ].join(" ")}
+                >
+                  <div className="font-semibold">{t.label}</div>
+                  <div className={task === t.id ? "text-zinc-200" : "text-zinc-600"}>
+                    {t.desc}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <label className="text-sm">
+                <div className="font-semibold">California county</div>
+                <select
+                  className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+                  value={county}
+                  onChange={(e) => setCounty(e.target.value)}
+                >
+                  {counties.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <div className="mt-2 text-xs text-zinc-500">
+                  Court finder:{" "}
+                  <a className="underline" href={courtFinder} target="_blank" rel="noreferrer">
+                    open
+                  </a>
+                </div>
+              </label>
+
+              <label className="text-sm">
+                <div className="font-semibold">Your role</div>
+                <select
+                  className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as FamilyLawRole)}
+                >
+                  {ROLE.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <div className="font-semibold">Education</div>
+                <select
+                  className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value as EducationLevel)}
+                >
+                  {EDU_LEVELS.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <div className="font-semibold">Employment</div>
+                <select
+                  className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+                  value={employment}
+                  onChange={(e) => setEmployment(e.target.value as EmploymentStatus)}
+                >
+                  {EMPLOYMENT.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="text-sm">
+                <div className="font-semibold">Income</div>
+                <select
+                  className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+                  value={income}
+                  onChange={(e) => setIncome(e.target.value as IncomeRange)}
+                >
+                  {INCOME.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label className="mt-6 block text-sm">
+              <div className="font-semibold">Notes (optional)</div>
+              <textarea
+                className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-3 py-2"
+                rows={5}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Key facts, deadlines, what you want…"
+              />
+            </label>
+
+            <div className="mt-6 text-xs text-zinc-500">
+              THOXIE is not a law firm. No legal advice. Use for preparation and drafting support.
+            </div>
+
+            <div className="mt-8">
+              <Link
+                href="/case"
+                className="inline-flex items-center justify-center rounded-xl bg-zinc-950 px-6 py-3 text-sm font-semibold text-white hover:bg-zinc-800"
+              >
+                Continue
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Evidence */}
+        <div className="md:col-span-5">
+          <div className="rounded-2xl border border-zinc-200 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold">Evidence (optional)</h2>
+            <p className="mt-2 text-sm text-zinc-700">
+              Upload files so you can organize them later (prototype).
+            </p>
+
+            <div className="mt-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="block w-full text-sm"
+                onChange={(e) => addEvidence(e.target.files)}
+              />
+            </div>
+
+            <div className="mt-6 space-y-3">
+              {evidence.length === 0 ? (
+                <div className="text-sm text-zinc-500">No evidence uploaded yet.</div>
+              ) : (
+                evidence.map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="rounded-xl border border-zinc-200 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold">{ev.name}</div>
+                        <div className="mt-1 text-xs text-zinc-500">
+                          {new Date(ev.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="rounded-lg border border-zinc-300 px-3 py-1 text-xs hover:bg-zinc-50"
+                        onClick={() => removeEvidence(ev)}
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="text-xs">
+                        <div className="font-semibold">Type</div>
+                        <select
+                          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm"
+                          value={ev.kind}
+                          onChange={(e) =>
+                            updateEvidence(ev.id, { kind: e.target.value as EvidenceKind })
+                          }
+                        >
+                          {EVIDENCE_KIND.map((k) => (
+                            <option key={k.id} value={k.id}>
+                              {k.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="text-xs">
+                        <div className="font-semibold">Whose evidence</div>
+                        <select
+                          className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm"
+                          value={ev.side}
+                          onChange={(e) =>
+                            updateEvidence(ev.id, { side: e.target.value as EvidenceSide })
+                          }
+                        >
+                          {EVIDENCE_SIDE.map((k) => (
+                            <option key={k.id} value={k.id}>
+                              {k.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+
+                    <label className="mt-3 block text-xs">
+                      <div className="font-semibold">Note</div>
+                      <input
+                        className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm"
+                        value={ev.note || ""}
+                        onChange={(e) =>
+                          updateEvidence(ev.id, { note: e.target.value })
+                        }
+                        placeholder="Why this matters / what it proves…"
+                      />
+                    </label>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="mt-6 text-xs text-zinc-500">
+              Files are stored locally in your browser (IndexedDB). Prototype only.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+
 
 

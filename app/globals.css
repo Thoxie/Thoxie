@@ -1,17 +1,11 @@
-/* Use Tailwind's base layers */
+/* Updated globals.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Add global styles */
 body {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  font-family: sans-serif;
-}
-
-/* Example: Add common global styles if needed */
-h1, h2, h3 {
-  color: #333;
+  font-family: Arial, sans-serif;
+  background-color: #f9f9f9;
 }

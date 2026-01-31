@@ -1,11 +1,17 @@
-/* TailwindCSS essentials */
+/* Use Tailwind's base layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Standard CSS */
+/* Add global styles */
 body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+/* Example: Add common global styles if needed */
+h1, h2, h3 {
+  color: #333;
 }

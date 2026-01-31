@@ -7,6 +7,9 @@
     "build": "next build"
   },
   "dependencies": {
+    "next": "^13.0.0", // This adds Next.js as a dependency
+    "react": "^18.2.0", // Required by Next.js
+    "react-dom": "^18.2.0", // Required by Next.js
     "node-fetch": "^2.6.7",
     "encoding": "^0.1.13",
     "openai": "^4.0.0"

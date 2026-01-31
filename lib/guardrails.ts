@@ -9,27 +9,20 @@ export type EnforceGuardrailsParams = {
   caseType?: string;
 };
 
-/**
- * Basic enforceGuardrails implementation that always RETURNS a GuardrailsResult.
- * Replace or extend this with your real guardrail logic (async checks, API calls, DB lookups, etc.).
- */
 export function enforceGuardrails(params: EnforceGuardrailsParams): GuardrailsResult {
   const { message = "", caseType = "family" } = params;
 
+  // Example check: Block if message is empty
   if (!message || message.trim().length === 0) {
     return { allowed: false, reason: "Message is empty" };
   }
 
-  // Example simple blocklist / heuristic checks (customize as needed)
-  const blockedPhrases = ["badword1", "badword2", "do-not-allow"];
-  const lower = message.toLowerCase();
-  const blocked = blockedPhrases.find((p) => lower.includes(p));
-
+  // Example check: Block specific words
+  const blocked = ["badword1", "badword2"].find(w => message.toLowerCase().includes(w));
   if (blocked) {
-    return { allowed: false, reason: `Message contains disallowed content: ${blocked}` };
+    return { allowed: false, reason: `Blocked word: ${blocked}` };
   }
 
-  // Example system preamble by caseType
   const systemPreamble =
     caseType === "family"
       ? "You are a compassionate assistant providing family-oriented advice."

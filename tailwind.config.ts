@@ -1,12 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx}", // Include all files in the `pages` directory
-    "./components/**/*.{js,ts,jsx,tsx}", // Include all files in the `components` directory
-    "./app/**/*.{js,ts,jsx,tsx}", // Add support if using the Next.js app directory
+    "./app/**/*.{js,ts,jsx,tsx}", // Include all files in the 'app' directory
+    "./pages/**/*.{js,ts,jsx,tsx}", // Include 'pages' directory
+    "./components/**/*.{js,ts,jsx,tsx}", // Tailwind scans the components folder
   ],
   theme: {
-    extend: {}, // Add custom styles here if needed
+    extend: {}, // Extend default themes if needed
   },
   plugins: [],
 };

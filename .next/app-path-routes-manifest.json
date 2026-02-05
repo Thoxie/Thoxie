@@ -1,8 +1,8 @@
 {
   "/_not-found/page": "/_not-found",
+  "/ai-chatbox/page": "/ai-chatbox",
   "/case-dashboard/page": "/case-dashboard",
   "/document-preview/page": "/document-preview",
-  "/page": "/",
   "/intake-wizard/page": "/intake-wizard",
-  "/ai-chatbox/page": "/ai-chatbox"
+  "/page": "/"
 }

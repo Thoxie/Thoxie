@@ -14,6 +14,13 @@
       "static/chunks/main-app-20cd7077dace0fcc.js",
       "static/chunks/app/layout-c40eabcc177df587.js"
     ],
+    "/ai-chatbox/page": [
+      "static/chunks/webpack-078f6dfb37dff419.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-ebd51be49873d76c.js",
+      "static/chunks/main-app-20cd7077dace0fcc.js",
+      "static/chunks/app/ai-chatbox/page-c40eabcc177df587.js"
+    ],
     "/case-dashboard/page": [
       "static/chunks/webpack-078f6dfb37dff419.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -28,13 +35,6 @@
       "static/chunks/main-app-20cd7077dace0fcc.js",
       "static/chunks/app/document-preview/page-c40eabcc177df587.js"
     ],
-    "/page": [
-      "static/chunks/webpack-078f6dfb37dff419.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-ebd51be49873d76c.js",
-      "static/chunks/main-app-20cd7077dace0fcc.js",
-      "static/chunks/app/page-2d6430e4e329e16c.js"
-    ],
     "/intake-wizard/page": [
       "static/chunks/webpack-078f6dfb37dff419.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -42,12 +42,12 @@
       "static/chunks/main-app-20cd7077dace0fcc.js",
       "static/chunks/app/intake-wizard/page-c40eabcc177df587.js"
     ],
-    "/ai-chatbox/page": [
+    "/page": [
       "static/chunks/webpack-078f6dfb37dff419.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-ebd51be49873d76c.js",
       "static/chunks/main-app-20cd7077dace0fcc.js",
-      "static/chunks/app/ai-chatbox/page-c40eabcc177df587.js"
+      "static/chunks/app/page-2d6430e4e329e16c.js"
     ]
   }
 }

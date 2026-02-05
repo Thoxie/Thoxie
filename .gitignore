@@ -1,9 +1,9 @@
 # Node modules
 node_modules/
 
-# Logs
-logs/
-*.log
+# Next.js build
+.next/
+
 
 # Environment files
 .env

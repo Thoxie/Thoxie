@@ -1,1 +1,1 @@
-{"buildCommand": "npm ci && npm run build", "outputDirectory": ".next", "rootDirectory": "thoxie"}
+{}

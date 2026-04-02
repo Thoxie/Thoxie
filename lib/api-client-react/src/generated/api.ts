@@ -5,18 +5,35 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  AskGenieBody,
+  AskGenieResponse,
+  Case,
+  CreateCaseBody,
+  DashboardSummary,
+  DemandLetterResponse,
+  Document,
+  Error,
+  HealthStatus,
+  IntakeData,
+  SuccessMessage,
+  UpdateCaseBody,
+  UploadDocumentBody,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +116,993 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List user cases
+ */
+export const getListCasesUrl = () => {
+  return `/api/cases`;
+};
+
+export const listCases = async (options?: RequestInit): Promise<Case[]> => {
+  return customFetch<Case[]>(getListCasesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCasesQueryKey = () => {
+  return [`/api/cases`] as const;
+};
+
+export const getListCasesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCases>>,
+  TError = ErrorType<Error>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listCases>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCasesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCases>>> = ({
+    signal,
+  }) => listCases({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCases>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCasesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCases>>
+>;
+export type ListCasesQueryError = ErrorType<Error>;
+
+/**
+ * @summary List user cases
+ */
+
+export function useListCases<
+  TData = Awaited<ReturnType<typeof listCases>>,
+  TError = ErrorType<Error>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listCases>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCasesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a new case
+ */
+export const getCreateCaseUrl = () => {
+  return `/api/cases`;
+};
+
+export const createCase = async (
+  createCaseBody: CreateCaseBody,
+  options?: RequestInit,
+): Promise<Case> => {
+  return customFetch<Case>(getCreateCaseUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createCaseBody),
+  });
+};
+
+export const getCreateCaseMutationOptions = <
+  TError = ErrorType<Error>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCase>>,
+    TError,
+    { data: BodyType<CreateCaseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createCase>>,
+  TError,
+  { data: BodyType<CreateCaseBody> },
+  TContext
+> => {
+  const mutationKey = ["createCase"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createCase>>,
+    { data: BodyType<CreateCaseBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createCase(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateCaseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createCase>>
+>;
+export type CreateCaseMutationBody = BodyType<CreateCaseBody>;
+export type CreateCaseMutationError = ErrorType<Error>;
+
+/**
+ * @summary Create a new case
+ */
+export const useCreateCase = <
+  TError = ErrorType<Error>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createCase>>,
+    TError,
+    { data: BodyType<CreateCaseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createCase>>,
+  TError,
+  { data: BodyType<CreateCaseBody> },
+  TContext
+> => {
+  return useMutation(getCreateCaseMutationOptions(options));
+};
+
+/**
+ * @summary Get a case by ID
+ */
+export const getGetCaseUrl = (caseId: number) => {
+  return `/api/cases/${caseId}`;
+};
+
+export const getCase = async (
+  caseId: number,
+  options?: RequestInit,
+): Promise<Case> => {
+  return customFetch<Case>(getGetCaseUrl(caseId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCaseQueryKey = (caseId: number) => {
+  return [`/api/cases/${caseId}`] as const;
+};
+
+export const getGetCaseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCase>>,
+  TError = ErrorType<Error>,
+>(
+  caseId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getCase>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCaseQueryKey(caseId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCase>>> = ({
+    signal,
+  }) => getCase(caseId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!caseId,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getCase>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetCaseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCase>>
+>;
+export type GetCaseQueryError = ErrorType<Error>;
+
+/**
+ * @summary Get a case by ID
+ */
+
+export function useGetCase<
+  TData = Awaited<ReturnType<typeof getCase>>,
+  TError = ErrorType<Error>,
+>(
+  caseId: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getCase>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCaseQueryOptions(caseId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update a case
+ */
+export const getUpdateCaseUrl = (caseId: number) => {
+  return `/api/cases/${caseId}`;
+};
+
+export const updateCase = async (
+  caseId: number,
+  updateCaseBody: UpdateCaseBody,
+  options?: RequestInit,
+): Promise<Case> => {
+  return customFetch<Case>(getUpdateCaseUrl(caseId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateCaseBody),
+  });
+};
+
+export const getUpdateCaseMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCase>>,
+    TError,
+    { caseId: number; data: BodyType<UpdateCaseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateCase>>,
+  TError,
+  { caseId: number; data: BodyType<UpdateCaseBody> },
+  TContext
+> => {
+  const mutationKey = ["updateCase"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateCase>>,
+    { caseId: number; data: BodyType<UpdateCaseBody> }
+  > = (props) => {
+    const { caseId, data } = props ?? {};
+
+    return updateCase(caseId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateCaseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateCase>>
+>;
+export type UpdateCaseMutationBody = BodyType<UpdateCaseBody>;
+export type UpdateCaseMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a case
+ */
+export const useUpdateCase = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateCase>>,
+    TError,
+    { caseId: number; data: BodyType<UpdateCaseBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateCase>>,
+  TError,
+  { caseId: number; data: BodyType<UpdateCaseBody> },
+  TContext
+> => {
+  return useMutation(getUpdateCaseMutationOptions(options));
+};
+
+/**
+ * @summary Delete a case
+ */
+export const getDeleteCaseUrl = (caseId: number) => {
+  return `/api/cases/${caseId}`;
+};
+
+export const deleteCase = async (
+  caseId: number,
+  options?: RequestInit,
+): Promise<SuccessMessage> => {
+  return customFetch<SuccessMessage>(getDeleteCaseUrl(caseId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteCaseMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCase>>,
+    TError,
+    { caseId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteCase>>,
+  TError,
+  { caseId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteCase"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteCase>>,
+    { caseId: number }
+  > = (props) => {
+    const { caseId } = props ?? {};
+
+    return deleteCase(caseId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteCaseMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteCase>>
+>;
+
+export type DeleteCaseMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a case
+ */
+export const useDeleteCase = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteCase>>,
+    TError,
+    { caseId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteCase>>,
+  TError,
+  { caseId: number },
+  TContext
+> => {
+  return useMutation(getDeleteCaseMutationOptions(options));
+};
+
+/**
+ * @summary Save intake wizard progress
+ */
+export const getSaveIntakeProgressUrl = (caseId: number) => {
+  return `/api/cases/${caseId}/intake`;
+};
+
+export const saveIntakeProgress = async (
+  caseId: number,
+  intakeData: IntakeData,
+  options?: RequestInit,
+): Promise<Case> => {
+  return customFetch<Case>(getSaveIntakeProgressUrl(caseId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(intakeData),
+  });
+};
+
+export const getSaveIntakeProgressMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveIntakeProgress>>,
+    TError,
+    { caseId: number; data: BodyType<IntakeData> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveIntakeProgress>>,
+  TError,
+  { caseId: number; data: BodyType<IntakeData> },
+  TContext
+> => {
+  const mutationKey = ["saveIntakeProgress"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveIntakeProgress>>,
+    { caseId: number; data: BodyType<IntakeData> }
+  > = (props) => {
+    const { caseId, data } = props ?? {};
+
+    return saveIntakeProgress(caseId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveIntakeProgressMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveIntakeProgress>>
+>;
+export type SaveIntakeProgressMutationBody = BodyType<IntakeData>;
+export type SaveIntakeProgressMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Save intake wizard progress
+ */
+export const useSaveIntakeProgress = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveIntakeProgress>>,
+    TError,
+    { caseId: number; data: BodyType<IntakeData> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveIntakeProgress>>,
+  TError,
+  { caseId: number; data: BodyType<IntakeData> },
+  TContext
+> => {
+  return useMutation(getSaveIntakeProgressMutationOptions(options));
+};
+
+/**
+ * @summary Generate a demand letter for a case
+ */
+export const getGenerateDemandLetterUrl = (caseId: number) => {
+  return `/api/cases/${caseId}/demand-letter`;
+};
+
+export const generateDemandLetter = async (
+  caseId: number,
+  options?: RequestInit,
+): Promise<DemandLetterResponse> => {
+  return customFetch<DemandLetterResponse>(getGenerateDemandLetterUrl(caseId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGenerateDemandLetterMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateDemandLetter>>,
+    TError,
+    { caseId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateDemandLetter>>,
+  TError,
+  { caseId: number },
+  TContext
+> => {
+  const mutationKey = ["generateDemandLetter"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateDemandLetter>>,
+    { caseId: number }
+  > = (props) => {
+    const { caseId } = props ?? {};
+
+    return generateDemandLetter(caseId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateDemandLetterMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateDemandLetter>>
+>;
+
+export type GenerateDemandLetterMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate a demand letter for a case
+ */
+export const useGenerateDemandLetter = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateDemandLetter>>,
+    TError,
+    { caseId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateDemandLetter>>,
+  TError,
+  { caseId: number },
+  TContext
+> => {
+  return useMutation(getGenerateDemandLetterMutationOptions(options));
+};
+
+/**
+ * @summary List documents for a case
+ */
+export const getListDocumentsUrl = (caseId: number) => {
+  return `/api/cases/${caseId}/documents`;
+};
+
+export const listDocuments = async (
+  caseId: number,
+  options?: RequestInit,
+): Promise<Document[]> => {
+  return customFetch<Document[]>(getListDocumentsUrl(caseId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListDocumentsQueryKey = (caseId: number) => {
+  return [`/api/cases/${caseId}/documents`] as const;
+};
+
+export const getListDocumentsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDocuments>>,
+  TError = ErrorType<unknown>,
+>(
+  caseId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listDocuments>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDocumentsQueryKey(caseId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDocuments>>> = ({
+    signal,
+  }) => listDocuments(caseId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!caseId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDocuments>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListDocumentsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listDocuments>>
+>;
+export type ListDocumentsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List documents for a case
+ */
+
+export function useListDocuments<
+  TData = Awaited<ReturnType<typeof listDocuments>>,
+  TError = ErrorType<unknown>,
+>(
+  caseId: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listDocuments>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListDocumentsQueryOptions(caseId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Upload a document to a case
+ */
+export const getUploadDocumentUrl = (caseId: number) => {
+  return `/api/cases/${caseId}/documents`;
+};
+
+export const uploadDocument = async (
+  caseId: number,
+  uploadDocumentBody: UploadDocumentBody,
+  options?: RequestInit,
+): Promise<Document> => {
+  return customFetch<Document>(getUploadDocumentUrl(caseId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(uploadDocumentBody),
+  });
+};
+
+export const getUploadDocumentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadDocument>>,
+    TError,
+    { caseId: number; data: BodyType<UploadDocumentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadDocument>>,
+  TError,
+  { caseId: number; data: BodyType<UploadDocumentBody> },
+  TContext
+> => {
+  const mutationKey = ["uploadDocument"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadDocument>>,
+    { caseId: number; data: BodyType<UploadDocumentBody> }
+  > = (props) => {
+    const { caseId, data } = props ?? {};
+
+    return uploadDocument(caseId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadDocumentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadDocument>>
+>;
+export type UploadDocumentMutationBody = BodyType<UploadDocumentBody>;
+export type UploadDocumentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Upload a document to a case
+ */
+export const useUploadDocument = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadDocument>>,
+    TError,
+    { caseId: number; data: BodyType<UploadDocumentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadDocument>>,
+  TError,
+  { caseId: number; data: BodyType<UploadDocumentBody> },
+  TContext
+> => {
+  return useMutation(getUploadDocumentMutationOptions(options));
+};
+
+/**
+ * @summary Delete a document
+ */
+export const getDeleteDocumentUrl = (caseId: number, documentId: number) => {
+  return `/api/cases/${caseId}/documents/${documentId}`;
+};
+
+export const deleteDocument = async (
+  caseId: number,
+  documentId: number,
+  options?: RequestInit,
+): Promise<SuccessMessage> => {
+  return customFetch<SuccessMessage>(getDeleteDocumentUrl(caseId, documentId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteDocumentMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteDocument>>,
+    TError,
+    { caseId: number; documentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteDocument>>,
+  TError,
+  { caseId: number; documentId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteDocument"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteDocument>>,
+    { caseId: number; documentId: number }
+  > = (props) => {
+    const { caseId, documentId } = props ?? {};
+
+    return deleteDocument(caseId, documentId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteDocumentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteDocument>>
+>;
+
+export type DeleteDocumentMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a document
+ */
+export const useDeleteDocument = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteDocument>>,
+    TError,
+    { caseId: number; documentId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteDocument>>,
+  TError,
+  { caseId: number; documentId: number },
+  TContext
+> => {
+  return useMutation(getDeleteDocumentMutationOptions(options));
+};
+
+/**
+ * @summary Get dashboard summary
+ */
+export const getGetDashboardUrl = () => {
+  return `/api/dashboard`;
+};
+
+export const getDashboard = async (
+  options?: RequestInit,
+): Promise<DashboardSummary> => {
+  return customFetch<DashboardSummary>(getGetDashboardUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetDashboardQueryKey = () => {
+  return [`/api/dashboard`] as const;
+};
+
+export const getGetDashboardQueryOptions = <
+  TData = Awaited<ReturnType<typeof getDashboard>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboard>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetDashboardQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getDashboard>>> = ({
+    signal,
+  }) => getDashboard({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboard>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetDashboardQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getDashboard>>
+>;
+export type GetDashboardQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get dashboard summary
+ */
+
+export function useGetDashboard<
+  TData = Awaited<ReturnType<typeof getDashboard>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getDashboard>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDashboardQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Ask the Genie AI a question
+ */
+export const getAskGenieUrl = () => {
+  return `/api/ai/ask`;
+};
+
+export const askGenie = async (
+  askGenieBody: AskGenieBody,
+  options?: RequestInit,
+): Promise<AskGenieResponse> => {
+  return customFetch<AskGenieResponse>(getAskGenieUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(askGenieBody),
+  });
+};
+
+export const getAskGenieMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof askGenie>>,
+    TError,
+    { data: BodyType<AskGenieBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof askGenie>>,
+  TError,
+  { data: BodyType<AskGenieBody> },
+  TContext
+> => {
+  const mutationKey = ["askGenie"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof askGenie>>,
+    { data: BodyType<AskGenieBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return askGenie(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AskGenieMutationResult = NonNullable<
+  Awaited<ReturnType<typeof askGenie>>
+>;
+export type AskGenieMutationBody = BodyType<AskGenieBody>;
+export type AskGenieMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Ask the Genie AI a question
+ */
+export const useAskGenie = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof askGenie>>,
+    TError,
+    { data: BodyType<AskGenieBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof askGenie>>,
+  TError,
+  { data: BodyType<AskGenieBody> },
+  TContext
+> => {
+  return useMutation(getAskGenieMutationOptions(options));
+};

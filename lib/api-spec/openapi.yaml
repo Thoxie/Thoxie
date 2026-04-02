@@ -10,6 +10,14 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: cases
+    description: Case management
+  - name: documents
+    description: Document management
+  - name: dashboard
+    description: Dashboard summary
+  - name: ai
+    description: AI assistant
 paths:
   /healthz:
     get:
@@ -24,6 +32,260 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: List user cases
+      responses:
+        "200":
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Case"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: Create a new case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCaseBody"
+      responses:
+        "201":
+          description: Case created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /cases/{caseId}:
+    get:
+      operationId: getCase
+      tags: [cases]
+      summary: Get a case by ID
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Case details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      operationId: updateCase
+      tags: [cases]
+      summary: Update a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCaseBody"
+      responses:
+        "200":
+          description: Case updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+    delete:
+      operationId: deleteCase
+      tags: [cases]
+      summary: Delete a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Case deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+
+  /cases/{caseId}/intake:
+    put:
+      operationId: saveIntakeProgress
+      tags: [cases]
+      summary: Save intake wizard progress
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntakeData"
+      responses:
+        "200":
+          description: Progress saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+
+  /cases/{caseId}/demand-letter:
+    post:
+      operationId: generateDemandLetter
+      tags: [cases]
+      summary: Generate a demand letter for a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Demand letter generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DemandLetterResponse"
+
+  /cases/{caseId}/documents:
+    get:
+      operationId: listDocuments
+      tags: [documents]
+      summary: List documents for a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Document"
+    post:
+      operationId: uploadDocument
+      tags: [documents]
+      summary: Upload a document to a case
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadDocumentBody"
+      responses:
+        "201":
+          description: Document uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+
+  /cases/{caseId}/documents/{documentId}:
+    delete:
+      operationId: deleteDocument
+      tags: [documents]
+      summary: Delete a document
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: documentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Document deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessMessage"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get dashboard summary
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /ai/ask:
+    post:
+      operationId: askGenie
+      tags: [ai]
+      summary: Ask the Genie AI a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskGenieBody"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskGenieResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +296,277 @@ components:
       required:
         - status
 
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessMessage:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        plaintiffName:
+          type: string
+        plaintiffAddress:
+          type: string
+        plaintiffCity:
+          type: string
+        plaintiffState:
+          type: string
+        plaintiffZip:
+          type: string
+        plaintiffPhone:
+          type: string
+        plaintiffEmail:
+          type: string
+        defendantName:
+          type: string
+        defendantAddress:
+          type: string
+        defendantCity:
+          type: string
+        defendantState:
+          type: string
+        defendantZip:
+          type: string
+        defendantPhone:
+          type: string
+        claimType:
+          type: string
+        claimDescription:
+          type: string
+        amountClaimed:
+          type: string
+        howAmountCalculated:
+          type: string
+        isAttyFeeDispute:
+          type: boolean
+        demandMade:
+          type: boolean
+        county:
+          type: string
+        courthouse:
+          type: string
+        intakeStep:
+          type: integer
+        intakeComplete:
+          type: boolean
+        demandLetter:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - createdAt
+        - updatedAt
+
+    CreateCaseBody:
+      type: object
+      properties:
+        plaintiffName:
+          type: string
+      required:
+        - plaintiffName
+
+    UpdateCaseBody:
+      type: object
+      properties:
+        plaintiffName:
+          type: string
+        plaintiffAddress:
+          type: string
+        plaintiffCity:
+          type: string
+        plaintiffState:
+          type: string
+        plaintiffZip:
+          type: string
+        plaintiffPhone:
+          type: string
+        plaintiffEmail:
+          type: string
+        defendantName:
+          type: string
+        defendantAddress:
+          type: string
+        defendantCity:
+          type: string
+        defendantState:
+          type: string
+        defendantZip:
+          type: string
+        defendantPhone:
+          type: string
+        claimType:
+          type: string
+        claimDescription:
+          type: string
+        amountClaimed:
+          type: string
+        howAmountCalculated:
+          type: string
+        isAttyFeeDispute:
+          type: boolean
+        demandMade:
+          type: boolean
+        county:
+          type: string
+        courthouse:
+          type: string
+        intakeStep:
+          type: integer
+        intakeComplete:
+          type: boolean
+
+    IntakeData:
+      type: object
+      properties:
+        plaintiffName:
+          type: string
+        plaintiffAddress:
+          type: string
+        plaintiffCity:
+          type: string
+        plaintiffState:
+          type: string
+        plaintiffZip:
+          type: string
+        plaintiffPhone:
+          type: string
+        plaintiffEmail:
+          type: string
+        defendantName:
+          type: string
+        defendantAddress:
+          type: string
+        defendantCity:
+          type: string
+        defendantState:
+          type: string
+        defendantZip:
+          type: string
+        defendantPhone:
+          type: string
+        claimType:
+          type: string
+        claimDescription:
+          type: string
+        amountClaimed:
+          type: string
+        howAmountCalculated:
+          type: string
+        isAttyFeeDispute:
+          type: boolean
+        demandMade:
+          type: boolean
+        county:
+          type: string
+        courthouse:
+          type: string
+        intakeStep:
+          type: integer
+        intakeComplete:
+          type: boolean
+
+    DemandLetterResponse:
+      type: object
+      properties:
+        demandLetter:
+          type: string
+      required:
+        - demandLetter
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        caseId:
+          type: integer
+        fileName:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: integer
+        uploadedAt:
+          type: string
+      required:
+        - id
+        - caseId
+        - fileName
+        - fileType
+        - fileSize
+        - uploadedAt
+
+    UploadDocumentBody:
+      type: object
+      properties:
+        fileName:
+          type: string
+        fileType:
+          type: string
+        fileSize:
+          type: integer
+        fileData:
+          type: string
+      required:
+        - fileName
+        - fileType
+        - fileSize
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalCases:
+          type: integer
+        completedIntakes:
+          type: integer
+        pendingIntakes:
+          type: integer
+        recentCases:
+          type: array
+          items:
+            $ref: "#/components/schemas/Case"
+      required:
+        - totalCases
+        - completedIntakes
+        - pendingIntakes
+        - recentCases
+
+    AskGenieBody:
+      type: object
+      properties:
+        question:
+          type: string
+        caseId:
+          type: integer
+          nullable: true
+      required:
+        - question
+
+    AskGenieResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+      required:
+        - answer

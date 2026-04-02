@@ -6,4 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./askGenieBody";
+export * from "./askGenieResponse";
+export * from "./case";
+export * from "./createCaseBody";
+export * from "./dashboardSummary";
+export * from "./demandLetterResponse";
+export * from "./document";
+export * from "./error";
 export * from "./healthStatus";
+export * from "./intakeData";
+export * from "./successMessage";
+export * from "./updateCaseBody";
+export * from "./uploadDocumentBody";

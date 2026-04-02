@@ -8,3 +8,134 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Error {
+  error: string;
+}
+
+export interface SuccessMessage {
+  message: string;
+}
+
+export interface Case {
+  id: number;
+  userId: string;
+  plaintiffName?: string;
+  plaintiffAddress?: string;
+  plaintiffCity?: string;
+  plaintiffState?: string;
+  plaintiffZip?: string;
+  plaintiffPhone?: string;
+  plaintiffEmail?: string;
+  defendantName?: string;
+  defendantAddress?: string;
+  defendantCity?: string;
+  defendantState?: string;
+  defendantZip?: string;
+  defendantPhone?: string;
+  claimType?: string;
+  claimDescription?: string;
+  amountClaimed?: string;
+  howAmountCalculated?: string;
+  isAttyFeeDispute?: boolean;
+  demandMade?: boolean;
+  county?: string;
+  courthouse?: string;
+  intakeStep?: number;
+  intakeComplete?: boolean;
+  demandLetter?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCaseBody {
+  plaintiffName: string;
+}
+
+export interface UpdateCaseBody {
+  plaintiffName?: string;
+  plaintiffAddress?: string;
+  plaintiffCity?: string;
+  plaintiffState?: string;
+  plaintiffZip?: string;
+  plaintiffPhone?: string;
+  plaintiffEmail?: string;
+  defendantName?: string;
+  defendantAddress?: string;
+  defendantCity?: string;
+  defendantState?: string;
+  defendantZip?: string;
+  defendantPhone?: string;
+  claimType?: string;
+  claimDescription?: string;
+  amountClaimed?: string;
+  howAmountCalculated?: string;
+  isAttyFeeDispute?: boolean;
+  demandMade?: boolean;
+  county?: string;
+  courthouse?: string;
+  intakeStep?: number;
+  intakeComplete?: boolean;
+}
+
+export interface IntakeData {
+  plaintiffName?: string;
+  plaintiffAddress?: string;
+  plaintiffCity?: string;
+  plaintiffState?: string;
+  plaintiffZip?: string;
+  plaintiffPhone?: string;
+  plaintiffEmail?: string;
+  defendantName?: string;
+  defendantAddress?: string;
+  defendantCity?: string;
+  defendantState?: string;
+  defendantZip?: string;
+  defendantPhone?: string;
+  claimType?: string;
+  claimDescription?: string;
+  amountClaimed?: string;
+  howAmountCalculated?: string;
+  isAttyFeeDispute?: boolean;
+  demandMade?: boolean;
+  county?: string;
+  courthouse?: string;
+  intakeStep?: number;
+  intakeComplete?: boolean;
+}
+
+export interface DemandLetterResponse {
+  demandLetter: string;
+}
+
+export interface Document {
+  id: number;
+  caseId: number;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  uploadedAt: string;
+}
+
+export interface UploadDocumentBody {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  fileData?: string;
+}
+
+export interface DashboardSummary {
+  totalCases: number;
+  completedIntakes: number;
+  pendingIntakes: number;
+  recentCases: Case[];
+}
+
+export interface AskGenieBody {
+  question: string;
+  caseId?: number | null;
+}
+
+export interface AskGenieResponse {
+  answer: string;
+}

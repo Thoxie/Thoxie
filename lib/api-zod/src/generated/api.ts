@@ -14,3 +14,329 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List user cases
+ */
+export const ListCasesResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  plaintiffName: zod.string().optional(),
+  plaintiffAddress: zod.string().optional(),
+  plaintiffCity: zod.string().optional(),
+  plaintiffState: zod.string().optional(),
+  plaintiffZip: zod.string().optional(),
+  plaintiffPhone: zod.string().optional(),
+  plaintiffEmail: zod.string().optional(),
+  defendantName: zod.string().optional(),
+  defendantAddress: zod.string().optional(),
+  defendantCity: zod.string().optional(),
+  defendantState: zod.string().optional(),
+  defendantZip: zod.string().optional(),
+  defendantPhone: zod.string().optional(),
+  claimType: zod.string().optional(),
+  claimDescription: zod.string().optional(),
+  amountClaimed: zod.string().optional(),
+  howAmountCalculated: zod.string().optional(),
+  isAttyFeeDispute: zod.boolean().optional(),
+  demandMade: zod.boolean().optional(),
+  county: zod.string().optional(),
+  courthouse: zod.string().optional(),
+  intakeStep: zod.number().optional(),
+  intakeComplete: zod.boolean().optional(),
+  demandLetter: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+export const ListCasesResponse = zod.array(ListCasesResponseItem);
+
+/**
+ * @summary Create a new case
+ */
+export const CreateCaseBody = zod.object({
+  plaintiffName: zod.string(),
+});
+
+/**
+ * @summary Get a case by ID
+ */
+export const GetCaseParams = zod.object({
+  caseId: zod.coerce.number(),
+});
+
+export const GetCaseResponse = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  plaintiffName: zod.string().optional(),
+  plaintiffAddress: zod.string().optional(),
+  plaintiffCity: zod.string().optional(),
+  plaintiffState: zod.string().optional(),
+  plaintiffZip: zod.string().optional(),
+  plaintiffPhone: zod.string().optional(),
+  plaintiffEmail: zod.string().optional(),
+  defendantName: zod.string().optional(),
+  defendantAddress: zod.string().optional(),
+  defendantCity: zod.string().optional(),
+  defendantState: zod.string().optional(),
+  defendantZip: zod.string().optional(),
+  defendantPhone: zod.string().optional(),
+  claimType: zod.string().optional(),
+  claimDescription: zod.string().optional(),
+  amountClaimed: zod.string().optional(),
+  howAmountCalculated: zod.string().optional(),
+  isAttyFeeDispute: zod.boolean().optional(),
+  demandMade: zod.boolean().optional(),
+  county: zod.string().optional(),
+  courthouse: zod.string().optional(),
+  intakeStep: zod.number().optional(),
+  intakeComplete: zod.boolean().optional(),
+  demandLetter: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Update a case
+ */
+export const UpdateCaseParams = zod.object({
+  caseId: zod.coerce.number(),
+});
+
+export const UpdateCaseBody = zod.object({
+  plaintiffName: zod.string().optional(),
+  plaintiffAddress: zod.string().optional(),
+  plaintiffCity: zod.string().optional(),
+  plaintiffState: zod.string().optional(),
+  plaintiffZip: zod.string().optional(),
+  plaintiffPhone: zod.string().optional(),
+  plaintiffEmail: zod.string().optional(),
+  defendantName: zod.string().optional(),
+  defendantAddress: zod.string().optional(),
+  defendantCity: zod.string().optional(),
+  defendantState: zod.string().optional(),
+  defendantZip: zod.string().optional(),
+  defendantPhone: zod.string().optional(),
+  claimType: zod.string().optional(),
+  claimDescription: zod.string().optional(),
+  amountClaimed: zod.string().optional(),
+  howAmountCalculated: zod.string().optional(),
+  isAttyFeeDispute: zod.boolean().optional(),
+  demandMade: zod.boolean().optional(),
+  county: zod.string().optional(),
+  courthouse: zod.string().optional(),
+  intakeStep: zod.number().optional(),
+  intakeComplete: zod.boolean().optional(),
+});
+
+export const UpdateCaseResponse = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  plaintiffName: zod.string().optional(),
+  plaintiffAddress: zod.string().optional(),
+  plaintiffCity: zod.string().optional(),
+  plaintiffState: zod.string().optional(),
+  plaintiffZip: zod.string().optional(),
+  plaintiffPhone: zod.string().optional(),
+  plaintiffEmail: zod.string().optional(),
+  defendantName: zod.string().optional(),
+  defendantAddress: zod.string().optional(),
+  defendantCity: zod.string().optional(),
+  defendantState: zod.string().optional(),
+  defendantZip: zod.string().optional(),
+  defendantPhone: zod.string().optional(),
+  claimType: zod.string().optional(),
+  claimDescription: zod.string().optional(),
+  amountClaimed: zod.string().optional(),
+  howAmountCalculated: zod.string().optional(),
+  isAttyFeeDispute: zod.boolean().optional(),
+  demandMade: zod.boolean().optional(),
+  county: zod.string().optional(),
+  courthouse: zod.string().optional(),
+  intakeStep: zod.number().optional(),
+  intakeComplete: zod.boolean().optional(),
+  demandLetter: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Delete a case
+ */
+export const DeleteCaseParams = zod.object({
+  caseId: zod.coerce.number(),
+});
+
+export const DeleteCaseResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Save intake wizard progress
+ */
+export const SaveIntakeProgressParams = zod.object({
+  caseId: zod.coerce.number(),
+});
+
+export const SaveIntakeProgressBody = zod.object({
+  plaintiffName: zod.string().optional(),
+  plaintiffAddress: zod.string().optional(),
+  plaintiffCity: zod.string().optional(),
+  plaintiffState: zod.string().optional(),
+  plaintiffZip: zod.string().optional(),
+  plaintiffPhone: zod.string().optional(),
+  plaintiffEmail: zod.string().optional(),
+  defendantName: zod.string().optional(),
+  defendantAddress: zod.string().optional(),
+  defendantCity: zod.string().optional(),
+  defendantState: zod.string().optional(),
+  defendantZip: zod.string().optional(),
+  defendantPhone: zod.string().optional(),
+  claimType: zod.string().optional(),
+  claimDescription: zod.string().optional(),
+  amountClaimed: zod.string().optional(),
+  howAmountCalculated: zod.string().optional(),
+  isAttyFeeDispute: zod.boolean().optional(),
+  demandMade: zod.boolean().optional(),
+  county: zod.string().optional(),
+  courthouse: zod.string().optional(),
+  intakeStep: zod.number().optional(),
+  intakeComplete: zod.boolean().optional(),
+});
+
+export const SaveIntakeProgressResponse = zod.object({
+  id: zod.number(),
+  userId: zod.string(),
+  plaintiffName: zod.string().optional(),
+  plaintiffAddress: zod.string().optional(),
+  plaintiffCity: zod.string().optional(),
+  plaintiffState: zod.string().optional(),
+  plaintiffZip: zod.string().optional(),
+  plaintiffPhone: zod.string().optional(),
+  plaintiffEmail: zod.string().optional(),
+  defendantName: zod.string().optional(),
+  defendantAddress: zod.string().optional(),
+  defendantCity: zod.string().optional(),
+  defendantState: zod.string().optional(),
+  defendantZip: zod.string().optional(),
+  defendantPhone: zod.string().optional(),
+  claimType: zod.string().optional(),
+  claimDescription: zod.string().optional(),
+  amountClaimed: zod.string().optional(),
+  howAmountCalculated: zod.string().optional(),
+  isAttyFeeDispute: zod.boolean().optional(),
+  demandMade: zod.boolean().optional(),
+  county: zod.string().optional(),
+  courthouse: zod.string().optional(),
+  intakeStep: zod.number().optional(),
+  intakeComplete: zod.boolean().optional(),
+  demandLetter: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Generate a demand letter for a case
+ */
+export const GenerateDemandLetterParams = zod.object({
+  caseId: zod.coerce.number(),
+});
+
+export const GenerateDemandLetterResponse = zod.object({
+  demandLetter: zod.string(),
+});
+
+/**
+ * @summary List documents for a case
+ */
+export const ListDocumentsParams = zod.object({
+  caseId: zod.coerce.number(),
+});
+
+export const ListDocumentsResponseItem = zod.object({
+  id: zod.number(),
+  caseId: zod.number(),
+  fileName: zod.string(),
+  fileType: zod.string(),
+  fileSize: zod.number(),
+  uploadedAt: zod.string(),
+});
+export const ListDocumentsResponse = zod.array(ListDocumentsResponseItem);
+
+/**
+ * @summary Upload a document to a case
+ */
+export const UploadDocumentParams = zod.object({
+  caseId: zod.coerce.number(),
+});
+
+export const UploadDocumentBody = zod.object({
+  fileName: zod.string(),
+  fileType: zod.string(),
+  fileSize: zod.number(),
+  fileData: zod.string().optional(),
+});
+
+/**
+ * @summary Delete a document
+ */
+export const DeleteDocumentParams = zod.object({
+  caseId: zod.coerce.number(),
+  documentId: zod.coerce.number(),
+});
+
+export const DeleteDocumentResponse = zod.object({
+  message: zod.string(),
+});
+
+/**
+ * @summary Get dashboard summary
+ */
+export const GetDashboardResponse = zod.object({
+  totalCases: zod.number(),
+  completedIntakes: zod.number(),
+  pendingIntakes: zod.number(),
+  recentCases: zod.array(
+    zod.object({
+      id: zod.number(),
+      userId: zod.string(),
+      plaintiffName: zod.string().optional(),
+      plaintiffAddress: zod.string().optional(),
+      plaintiffCity: zod.string().optional(),
+      plaintiffState: zod.string().optional(),
+      plaintiffZip: zod.string().optional(),
+      plaintiffPhone: zod.string().optional(),
+      plaintiffEmail: zod.string().optional(),
+      defendantName: zod.string().optional(),
+      defendantAddress: zod.string().optional(),
+      defendantCity: zod.string().optional(),
+      defendantState: zod.string().optional(),
+      defendantZip: zod.string().optional(),
+      defendantPhone: zod.string().optional(),
+      claimType: zod.string().optional(),
+      claimDescription: zod.string().optional(),
+      amountClaimed: zod.string().optional(),
+      howAmountCalculated: zod.string().optional(),
+      isAttyFeeDispute: zod.boolean().optional(),
+      demandMade: zod.boolean().optional(),
+      county: zod.string().optional(),
+      courthouse: zod.string().optional(),
+      intakeStep: zod.number().optional(),
+      intakeComplete: zod.boolean().optional(),
+      demandLetter: zod.string().nullish(),
+      createdAt: zod.string(),
+      updatedAt: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary Ask the Genie AI a question
+ */
+export const AskGenieBody = zod.object({
+  question: zod.string(),
+  caseId: zod.number().nullish(),
+});
+
+export const AskGenieResponse = zod.object({
+  answer: zod.string(),
+});

@@ -383,8 +383,12 @@ components:
       properties:
         plaintiffName:
           type: string
-      required:
-        - plaintiffName
+        claimDescription:
+          type: string
+        claimType:
+          type: string
+        county:
+          type: string
 
     UpdateCaseBody:
       type: object

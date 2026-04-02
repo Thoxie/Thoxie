@@ -55,7 +55,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               <Link href="/dashboard" className="hidden sm:inline-flex text-sm font-semibold text-foreground/70 hover:text-foreground transition-colors px-3 py-2">
                 Resume Your Case
               </Link>
-              <Link href="/sign-up" className="inline-flex h-9 items-center justify-center rounded-full bg-orange px-5 text-sm font-bold text-white shadow hover:opacity-90 transition-opacity">
+              <Link href="/start-case" className="inline-flex h-9 items-center justify-center rounded-full bg-orange px-5 text-sm font-bold text-white shadow hover:opacity-90 transition-opacity">
                 Start Your Case
               </Link>
               <UserButton />

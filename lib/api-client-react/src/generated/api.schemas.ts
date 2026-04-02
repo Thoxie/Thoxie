@@ -49,7 +49,10 @@ export interface Case {
 }
 
 export interface CreateCaseBody {
-  plaintiffName: string;
+  plaintiffName?: string;
+  claimDescription?: string;
+  claimType?: string;
+  county?: string;
 }
 
 export interface UpdateCaseBody {

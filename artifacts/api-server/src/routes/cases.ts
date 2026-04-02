@@ -30,6 +30,9 @@ router.post("/cases", requireAuth, async (req: any, res) => {
     const [newCase] = await db.insert(casesTable).values({
       userId: req.userId,
       plaintiffName: req.body.plaintiffName || "",
+      claimDescription: req.body.claimDescription || "",
+      claimType: req.body.claimType || "",
+      county: req.body.county || "",
     }).returning();
     res.status(201).json(newCase);
   } catch (err) {

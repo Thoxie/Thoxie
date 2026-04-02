@@ -54,7 +54,10 @@ export const ListCasesResponse = zod.array(ListCasesResponseItem);
  * @summary Create a new case
  */
 export const CreateCaseBody = zod.object({
-  plaintiffName: zod.string(),
+  plaintiffName: zod.string().optional(),
+  claimDescription: zod.string().optional(),
+  claimType: zod.string().optional(),
+  county: zod.string().optional(),
 });
 
 /**

@@ -56,8 +56,9 @@ router.get("/cases/:caseId", requireAuth, async (req: any, res) => {
 router.put("/cases/:caseId", requireAuth, async (req: any, res) => {
   try {
     const caseId = parseInt(req.params.caseId);
+    const { userId, id, createdAt, ...safeBody } = req.body;
     const [updated] = await db.update(casesTable)
-      .set({ ...req.body, updatedAt: new Date() })
+      .set({ ...safeBody, updatedAt: new Date() })
       .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)))
       .returning();
     if (!updated) {
@@ -87,8 +88,9 @@ router.delete("/cases/:caseId", requireAuth, async (req: any, res) => {
 router.put("/cases/:caseId/intake", requireAuth, async (req: any, res) => {
   try {
     const caseId = parseInt(req.params.caseId);
+    const { userId, id, createdAt, ...safeBody } = req.body;
     const [updated] = await db.update(casesTable)
-      .set({ ...req.body, updatedAt: new Date() })
+      .set({ ...safeBody, updatedAt: new Date() })
       .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)))
       .returning();
     if (!updated) {

@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { useListDocuments, useUploadDocument, useDeleteDocument } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Trash2, Upload, Eye, Paperclip } from "lucide-react";
+import { FileText, Trash2, Eye, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function DocumentsTab({ caseId }: { caseId: number }) {

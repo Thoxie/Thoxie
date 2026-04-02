@@ -37,7 +37,7 @@ export default function Home() {
               </div>
               <h3 className="text-lg font-bold text-navy mb-2">Court-Ready Intake Forms</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Guided 7-step intake collects every field required for your SC-100 — legally complete, nothing missed.
+                Guided 4-step intake collects every field required for your SC-100 — legally complete, nothing missed.
               </p>
             </div>
             <div className="bg-white rounded-xl p-6 border border-border/60">
@@ -73,7 +73,7 @@ export default function Home() {
               <div className="text-4xl font-extrabold text-gold mb-2">01</div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                 <FileText className="h-3.5 w-3.5" />
-                7-Step Intake Wizard
+                4-Step Intake Wizard
               </div>
               <h3 className="text-lg font-bold text-navy mb-2">Tell Us What Happened</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">

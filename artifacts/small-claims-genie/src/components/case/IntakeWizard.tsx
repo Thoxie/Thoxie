@@ -86,8 +86,6 @@ export function IntakeWizard({ caseData }: { caseData: any }) {
 
   const stepTitles = ["Parties", "Claim Details", "Prior Demand & Venue", "Eligibility & Review"];
 
-  const selectedCourthouses = formData.county ? (COUNTY_COURTHOUSES[formData.county] || []) : [];
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -169,6 +167,33 @@ export function IntakeWizard({ caseData }: { caseData: any }) {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {step === 1 && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <Label>California County <span className="text-red-500">*</span></Label>
+            <Select value={formData.county} onValueChange={v => { handleChange("county", v); handleChange("courthouse", ""); }}>
+              <SelectTrigger className="bg-white"><SelectValue placeholder="Select your county" /></SelectTrigger>
+              <SelectContent>
+                {counties.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {formData.county && (COUNTY_COURTHOUSES[formData.county] || []).length > 0 && (
+            <div>
+              <Label>Courthouse</Label>
+              <Select value={formData.courthouse} onValueChange={v => handleChange("courthouse", v)}>
+                <SelectTrigger className="bg-white"><SelectValue placeholder="Select courthouse" /></SelectTrigger>
+                <SelectContent>
+                  {(COUNTY_COURTHOUSES[formData.county] || []).map(ch => (
+                    <SelectItem key={ch.name} value={ch.name}>{ch.name} — {ch.address}, {ch.city}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       )}
 

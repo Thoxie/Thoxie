@@ -20,7 +20,7 @@ pnpm workspace monorepo. A guided legal form assistant for California Small Clai
 - **Routing**: Wouter
 - **UI Components**: shadcn/ui (Radix primitives)
 - **Font**: Plus Jakarta Sans
-- **Theme**: Navy (#1e293b) + Gold (#eab308) palette
+- **Theme**: Navy (`hsl(220 60% 25%)`) + Gold (`hsl(40 95% 55%)`) + Orange CTA (`hsl(18 90% 55%)`) + Mint background (`hsl(160 30% 95%)`)
 
 ## Structure
 
@@ -44,15 +44,16 @@ artifacts-monorepo/
 
 ## Database Schema
 
-- **cases** — User's small claims cases with plaintiff/defendant info, claim details, intake progress
+- **cases** — User's small claims cases with plaintiff/defendant info, claim details, intake progress, demand/venue info, eligibility flags
+  - New fields: `demandDescription`, `incidentDateStart`, `incidentDateEnd`, `venueBasis`, `suingPublicEntity`, `disputeAttorneyFees`, `filedOver12`, `filedOver2500`
 - **documents** — File uploads attached to cases
 
 ## API Endpoints
 
 - `GET /api/healthz` — Health check
 - `GET/POST /api/cases` — List/create cases (auth required)
-- `GET/PUT/DELETE /api/cases/:id` — Case CRUD (auth required)
-- `PUT /api/cases/:id/intake` — Save intake wizard progress (auth required)
+- `GET/PUT/DELETE /api/cases/:id` — Case CRUD (auth required, body sanitized — userId/id/createdAt stripped)
+- `PUT /api/cases/:id/intake` — Save intake wizard progress (auth required, body sanitized)
 - `POST /api/cases/:id/demand-letter` — Generate demand letter (auth required)
 - `GET/POST /api/cases/:id/documents` — List/upload documents (auth required)
 - `DELETE /api/cases/:id/documents/:docId` — Delete document (auth required)
@@ -62,20 +63,40 @@ artifacts-monorepo/
 ## Frontend Pages
 
 - `/` — Landing page (public) / redirects to dashboard if signed in
+- `/how-it-works` — How it works guide (public)
+- `/types-of-cases` — Types of small claims cases (public)
+- `/faq` — 21 Q&A frequently asked questions (public)
+- `/resources` — Court information and resources (public)
+- `/start-case` — Create new case form (auth required)
 - `/dashboard` — Case management dashboard (auth required)
-- `/cases/:id` — Case detail with tabs: Intake, Documents, Demand Letter, Forms
-- `/court` — Court information (public)
-- `/faq` — Frequently asked questions (public)
-- `/contact` — Contact page (public)
-- `/disclaimers` — Legal disclaimers (public)
+- `/cases/:id` — Case detail with 5 tabs: Intake, Documents, Ask The Genie AI, Demand Letter, Forms
 - `/sign-in`, `/sign-up` — Clerk authentication
+
+## Case Detail Page
+
+- **Header**: Back link "← Your Cases", case title, "Intake Complete" badge, claim amount
+- **5 Tabs**: Intake | Documents | Ask The Genie AI | Demand Letter | Forms
+- Navy active tab styling, white card containers
+
+## 4-Step Intake Wizard
+
+1. **Parties**: Plaintiff info (name, address, phone, email) + Defendant info + County/Courthouse selection
+2. **Claim Details**: Claim type dropdown, amount, date range, what happened textarea, calculation textarea
+3. **Prior Demand & Venue**: Prior demand yes/no + description, venue basis radio buttons (4 options)
+4. **Eligibility & Review**: 4 eligibility checkboxes + full case summary review panel
+
+## Courthouse Data
+
+- `src/data/courthouses.ts` — Maps all 58 California counties to courthouse names and addresses
+- Counties with multiple courthouses (e.g., Los Angeles has 11, San Diego has 4) show dropdown selection
+- Courthouse data displayed in step 4 review panel
 
 ## Key Features
 
-1. **7-Step Intake Wizard**: Plaintiff info → Defendant info → Claim type → Amount → Demand made → County/Court → Review
+1. **4-Step Intake Wizard**: Parties → Claim Details → Prior Demand & Venue → Eligibility & Review
 2. **Demand Letter Generator**: Auto-generates professional demand letters from case data
-3. **Document Upload**: Attach evidence files to cases
-4. **Ask the Genie AI**: FAQ-based assistant for common small claims questions
+3. **Document Upload**: Drag-and-drop file upload with status badges and file details
+4. **Ask the Genie AI**: Embedded chat for small claims questions (full tab view)
 5. **Court Information**: Filing fees, process steps, links to CA courts website
 6. **Official Forms Links**: SC-100, SC-101, SC-104, SC-120, FW-001
 

@@ -1,124 +1,146 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
-import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { CheckCircle2, FileText, Scale, ArrowRight, FileCheck, HelpCircle } from "lucide-react";
+import { FileText, Upload, ClipboardCheck, Sparkles } from "lucide-react";
 
 export default function Home() {
   return (
     <PublicLayout>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-primary text-primary-foreground py-20 md:py-32">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=2400&auto=format&fit=crop')] opacity-10 bg-cover bg-center mix-blend-overlay"></div>
-        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center">
-          <div className="inline-flex items-center rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-sm font-medium text-accent mb-6">
-            <Scale className="mr-2 h-4 w-4" />
-            California Small Claims Assistance
-          </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight max-w-4xl mb-6">
-            Small Claims Court, <span className="text-accent">Simplified.</span>
+      <section className="py-16 md:py-24 bg-background">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-navy leading-tight mb-6">
+            Win in Small Claims Court.<br />
+            Don't lose because you're unprepared.<br />
+            Get your money back!
           </h1>
-          <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mb-10">
-            Professional guided preparation for non-lawyers. Court-ready forms, AI-powered intake, and demand letter generation for California small claims.
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mb-8">
+            Small Claims Genie walks you through every step — intake, evidence, AI chat,
+            demand letters and your court-ready forms, ready to file. No lawyer needed.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/sign-up" className="inline-flex h-12 items-center justify-center rounded-md bg-accent px-8 text-base font-semibold text-primary shadow hover:bg-accent/90 transition-colors">
-              Start Your Case
-              <ArrowRight className="ml-2 h-5 w-5" />
+            <Link href="/sign-up" className="inline-flex h-12 items-center justify-center rounded-full bg-[#2ecc71] hover:bg-[#27ae60] px-8 text-base font-bold text-white shadow transition-colors gap-2">
+              <Sparkles className="h-4 w-4" />
+              Start Your Case Free
             </Link>
-            <Link href="/court" className="inline-flex h-12 items-center justify-center rounded-md border border-primary-foreground/20 bg-primary/50 backdrop-blur-sm px-8 text-base font-medium text-primary-foreground hover:bg-primary-foreground/10 transition-colors">
-              Learn About The Process
+            <Link href="/dashboard" className="inline-flex h-12 items-center justify-center rounded-full border-2 border-foreground/20 bg-white px-8 text-base font-semibold text-foreground hover:bg-foreground/5 transition-colors">
+              Resume Your Case
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-xs font-bold tracking-widest uppercase text-muted-foreground mb-2">Why Choose Us</h2>
-            <h3 className="text-3xl font-bold text-foreground">Everything you need to file</h3>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-card border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-12 w-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6" />
+      <section className="py-12 bg-background border-t border-border/50">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl p-6 border border-border/60">
+              <div className="h-10 w-10 bg-mint-dark rounded-lg flex items-center justify-center mb-4">
+                <FileText className="h-5 w-5 text-navy" />
               </div>
-              <h4 className="text-xl font-bold mb-2">Guided Intake</h4>
-              <p className="text-muted-foreground">Our 7-step wizard translates your story into the structured format required by California courts.</p>
+              <h3 className="text-lg font-bold text-navy mb-2">Court-Ready Intake Forms</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Guided 7-step intake collects every field required for your SC-100 — legally complete, nothing missed.
+              </p>
             </div>
-            
-            <div className="bg-card border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-12 w-12 bg-accent/20 text-accent rounded-lg flex items-center justify-center mb-4">
-                <FileCheck className="h-6 w-6" />
+            <div className="bg-white rounded-xl p-6 border border-border/60">
+              <div className="h-10 w-10 bg-mint-dark rounded-lg flex items-center justify-center mb-4">
+                <Upload className="h-5 w-5 text-navy" />
               </div>
-              <h4 className="text-xl font-bold mb-2">Demand Letters</h4>
-              <p className="text-muted-foreground">Instantly generate professional demand letters, a strict requirement before filing a small claims case.</p>
+              <h3 className="text-lg font-bold text-navy mb-2">Evidence That Speaks for You</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Upload receipts, contracts, texts, and photos. Our AI reads every document and builds your case argument.
+              </p>
             </div>
-            
-            <div className="bg-card border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-12 w-12 bg-primary/10 text-primary rounded-lg flex items-center justify-center mb-4">
-                <HelpCircle className="h-6 w-6" />
+            <div className="bg-white rounded-xl p-6 border border-border/60">
+              <div className="h-10 w-10 bg-mint-dark rounded-lg flex items-center justify-center mb-4">
+                <ClipboardCheck className="h-5 w-5 text-navy" />
               </div>
-              <h4 className="text-xl font-bold mb-2">AI Assistant</h4>
-              <p className="text-muted-foreground">Have a question? The Small Claims Genie is available 24/7 to guide you through terminology and procedures.</p>
+              <h3 className="text-lg font-bold text-navy mb-2">Filing Guidance & Checklists</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Step-by-step filing instructions, courthouse details, and a readiness checklist for your specific county.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Case Types Section */}
-      <section className="py-20 bg-muted/30 border-y">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row gap-12 items-center">
-            <div className="flex-1 space-y-6">
-              <h2 className="text-3xl font-bold text-foreground">Common Case Types</h2>
-              <p className="text-lg text-muted-foreground">We help everyday people navigate a wide variety of civil disputes up to $12,500.</p>
-              
-              <ul className="space-y-3">
-                {[
-                  "Contractors & Home Services",
-                  "Landlord & Tenant Disputes",
-                  "Auto Repair Issues",
-                  "Breach of Contract",
-                  "Unrefunded Payments & Chargebacks",
-                  "Airline & Travel Cancellations"
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                    <span className="font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Link href="/sign-up" className="inline-flex mt-4 items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors">
-                Get Started
-              </Link>
-            </div>
-            
-            <div className="flex-1">
-              <div className="rounded-xl overflow-hidden shadow-2xl border border-border/50">
-                <img 
-                  src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?q=80&w=1200&auto=format&fit=crop" 
-                  alt="Legal documents on a desk" 
-                  className="w-full h-[400px] object-cover"
-                />
+      <section id="how-it-works" className="py-16 bg-background">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-navy mb-2">How It Works</h2>
+            <p className="text-muted-foreground">Three steps from dispute to ready-to-file.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-[#dbeafe]/50 rounded-xl p-6 border border-blue-200/40">
+              <div className="text-4xl font-extrabold text-gold mb-2">01</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                <FileText className="h-3.5 w-3.5" />
+                7-Step Intake Wizard
               </div>
+              <h3 className="text-lg font-bold text-navy mb-2">Tell Us What Happened</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Answer plain English questions about your dispute. No legal jargon — just the facts.
+              </p>
+            </div>
+            <div className="bg-[#dbeafe]/50 rounded-xl p-6 border border-blue-200/40">
+              <div className="text-4xl font-extrabold text-gold mb-2">02</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                <Upload className="h-3.5 w-3.5" />
+                AI Evidence Reader
+              </div>
+              <h3 className="text-lg font-bold text-navy mb-2">Upload Your Evidence</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Securely upload receipts, contracts, texts, and photos. Our AI reads every document so it can help you argue your case.
+              </p>
+            </div>
+            <div className="bg-[#dbeafe]/50 rounded-xl p-6 border border-blue-200/40">
+              <div className="text-4xl font-extrabold text-gold mb-2">03</div>
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                SC-100 Download
+              </div>
+              <h3 className="text-lg font-bold text-navy mb-2">Get Your Forms & File</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Download your completed demand letter, court ready forms, ready to file. Step-by-step filing instructions included for your county courthouse.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-background">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to file your claim?</h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+      <section id="types-of-cases" className="py-16 bg-mint-dark/50 border-t border-border/50">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-navy mb-2">Types of Cases We Handle</h2>
+            <p className="text-muted-foreground">We help with disputes up to $12,500 in California Small Claims Court.</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              "Contractors & Home Services",
+              "Landlord & Tenant Disputes",
+              "Auto Repair Issues",
+              "Breach of Contract",
+              "Unrefunded Payments & Chargebacks",
+              "Airline & Travel Cancellations",
+              "Property Damage",
+              "Personal Injury (minor)",
+              "Loan Repayment"
+            ].map((type) => (
+              <div key={type} className="bg-white rounded-lg px-5 py-4 border border-border/60 flex items-center gap-3">
+                <div className="h-2 w-2 rounded-full bg-gold shrink-0" />
+                <span className="font-semibold text-sm text-navy">{type}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 bg-navy text-white">
+        <div className="container mx-auto px-4 text-center max-w-2xl">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to file your claim?</h2>
+          <p className="text-lg text-white/70 mb-8">
             Don't let the legal process intimidate you. Organize your case, generate your forms, and get ready for court today.
           </p>
-          <Link href="/sign-up" className="inline-flex h-14 items-center justify-center rounded-md bg-primary px-8 text-lg font-semibold text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors">
-            Create Free Account
+          <Link href="/sign-up" className="inline-flex h-14 items-center justify-center rounded-full bg-orange px-10 text-lg font-bold text-white shadow-lg hover:opacity-90 transition-opacity">
+            Start Your Case Free
           </Link>
         </div>
       </section>

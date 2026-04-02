@@ -6,7 +6,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/#how-it-works", label: "How It Works" },
+  { href: "/how-it-works", label: "How It Works" },
   { href: "/#types-of-cases", label: "Types of Cases" },
   { href: "/faq", label: "FAQ" },
   { href: "/court", label: "Resources" },

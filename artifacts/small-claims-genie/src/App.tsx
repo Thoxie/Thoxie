@@ -14,6 +14,7 @@ import Contact from "@/pages/Contact";
 import Disclaimers from "@/pages/Disclaimers";
 import CaseDetail from "@/pages/CaseDetail";
 import HowItWorks from "@/pages/HowItWorks";
+import TypesOfCases from "@/pages/TypesOfCases";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +129,7 @@ function ClerkProviderWithRoutes() {
               {(params) => <CaseDetailRoute id={params.id} />}
             </Route>
             <Route path="/how-it-works" component={HowItWorks} />
+            <Route path="/types-of-cases" component={TypesOfCases} />
             <Route path="/court" component={CourtInfo} />
             <Route path="/faq" component={FAQ} />
             <Route path="/contact" component={Contact} />

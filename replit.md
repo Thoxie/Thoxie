@@ -82,11 +82,22 @@ artifacts-monorepo/
 - `/sign-in`, `/sign-up` — Clerk authentication
 - `/disclaimers`, `/contact` — Legal disclaimers, contact info
 
-## Case Detail Page
+## Authenticated Layout
 
-- **Header**: Back link "← Your Cases", case title, "Intake Complete" badge, claim amount
-- **5 Tabs**: Intake | Documents | Ask The Genie AI | Demand Letter | Forms
-- Navy active tab styling, white card containers
+- Top navigation bar (NOT sidebar) matching public layout: Home, How It Works, Types of Cases, FAQ, Resources
+- "Resume Your Case" (Dashboard link) + "Start Your Case" (`/cases/new`) buttons + Sign Out
+- Logo: `h-[92px]` in header, footer with copyright + Disclaimers/Contact links
+
+## Case Detail Page (`/cases/:id`)
+
+- **Back link**: "← Your Cases" (to dashboard)
+- **Header card**: Case title + Badge (Complete/In Progress) + claim amount
+- **Radix Tabs**: 5 tabs with `grid-cols-5` layout, `data-[state=active]:bg-primary` styling
+  - Intake (ClipboardList icon)
+  - Documents (FileText icon)
+  - Ask The Genie AI (MessageSquare icon)
+  - Demand Letter (Mail icon)
+  - Forms (Scale icon)
 
 ## 4-Step Intake Wizard
 

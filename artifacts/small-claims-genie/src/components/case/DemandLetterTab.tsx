@@ -1,107 +1,157 @@
-import { useState } from "react";
-import { useGenerateDemandLetter } from "@workspace/api-client-react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Sparkles, Copy, Mail } from "lucide-react";
+import { Loader2, Mail, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@clerk/react";
+import { useMutation } from "@tanstack/react-query";
+
+const tones = [
+  { id: "formal", label: "Formal", desc: "Neutral, professional tone — facts stated plainly" },
+  { id: "firm", label: "Firm", desc: "Assertive & deadline-focused — legal basis emphasized" },
+  { id: "friendly", label: "Friendly", desc: "Cooperative tone — prefers settlement over court" },
+] as const;
 
 export function DemandLetterTab({ caseData }: { caseData: any }) {
   const { toast } = useToast();
+  const { getToken } = useAuth();
+  const [selectedTone, setSelectedTone] = useState<string>("firm");
   const [letterContent, setLetterContent] = useState(caseData.demandLetter || "");
-  
-  const generateMutation = useGenerateDemandLetter({
-    mutation: {
-      onSuccess: (data) => {
-        setLetterContent(data.demandLetter || "Demand letter generated successfully. Review below.");
-        toast({ title: "Letter generated!" });
-      },
-      onError: () => {
-        toast({ title: "Failed to generate letter", variant: "destructive" });
-      }
-    }
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const generateMutation = useMutation({
+    mutationFn: async (tone: string) => {
+      const basePath = import.meta.env.BASE_URL || "/";
+      const token = await getToken();
+      const res = await fetch(`${basePath}api/cases/${caseData.id}/demand-letter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        body: JSON.stringify({ tone }),
+      });
+      if (!res.ok) throw new Error("Failed to generate");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setLetterContent(data.demandLetter || "");
+      toast({ title: "Demand letter generated!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to generate letter", variant: "destructive" });
+    },
   });
 
   const handleGenerate = () => {
-    generateMutation.mutate({ caseId: caseData.id });
+    generateMutation.mutate(selectedTone);
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(letterContent);
-    toast({ title: "Copied to clipboard" });
+  const handleDownloadPDF = async () => {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "in", format: "letter" });
+      const margin = 1;
+      const pageWidth = 8.5 - 2 * margin;
+      const lineHeight = 0.2;
+      const pageHeight = 11 - 2 * margin;
+      let y = margin;
+
+      doc.setFont("courier", "normal");
+      doc.setFontSize(11);
+
+      const lines = doc.splitTextToSize(letterContent, pageWidth);
+      for (const line of lines) {
+        if (y > margin + pageHeight) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, margin, y);
+        y += lineHeight;
+      }
+
+      const fileName = `Demand_Letter_${caseData.defendantName?.replace(/\s+/g, "_") || "Case"}_${new Date().toISOString().split("T")[0]}.pdf`;
+      doc.save(fileName);
+      toast({ title: "PDF downloaded!" });
+    } catch {
+      toast({ title: "Failed to create PDF", variant: "destructive" });
+    }
   };
+
+  const missingFields = !caseData.plaintiffName || !caseData.defendantName || !caseData.amountClaimed;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+      <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Demand Letter</h2>
-          <p className="text-muted-foreground">California requires you to demand payment before filing suit.</p>
+          <h2 className="text-xl font-bold text-navy flex items-center gap-2">
+            <Mail className="h-5 w-5" />
+            Demand Letter Generator
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Generate a professional pre-litigation demand letter using your case details.
+          </p>
         </div>
-        <Button onClick={handleGenerate} disabled={generateMutation.isPending || !caseData.plaintiffName || !caseData.defendantName} className="gap-2 shrink-0">
-          {generateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-accent" />}
-          {letterContent ? "Regenerate with AI" : "Generate with AI"}
-        </Button>
+        {letterContent && (
+          <Button onClick={handleDownloadPDF} className="bg-orange hover:bg-orange/90 text-white gap-2 shrink-0">
+            <Download className="h-4 w-4" />
+            Download PDF
+          </Button>
+        )}
       </div>
 
-      {(!caseData.plaintiffName || !caseData.defendantName || !caseData.amountClaimed) && (
-        <div className="bg-accent/10 border-l-4 border-accent p-4 text-sm text-foreground">
-          <strong>Tip:</strong> Fill out the Plaintiff, Defendant, and Amount sections in the Intake wizard for a better generated letter.
+      {missingFields && (
+        <div className="bg-gold/10 border-l-4 border-gold p-4 text-sm text-foreground">
+          <strong>Tip:</strong> Complete the Intake wizard (Plaintiff, Defendant, and Amount) to generate a better letter.
         </div>
       )}
 
-      {letterContent ? (
-        <div className="space-y-4">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={handleCopy}>
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Text
-            </Button>
-            <Button variant="outline" size="sm">
-              <Mail className="h-4 w-4 mr-2" />
-              Email via System (Coming Soon)
-            </Button>
-          </div>
-          <Textarea 
-            value={letterContent} 
-            onChange={(e) => setLetterContent(e.target.value)}
-            className="min-h-[500px] font-serif text-base leading-relaxed p-6"
-          />
-          <p className="text-xs text-muted-foreground text-center">
-            You can edit the generated letter above before sending it. Make sure to send it via Certified Mail with Return Receipt Requested.
-          </p>
+      <div>
+        <h3 className="font-semibold text-sm mb-3">Select Tone</h3>
+        <div className="grid grid-cols-3 gap-3">
+          {tones.map((tone) => (
+            <button
+              key={tone.id}
+              onClick={() => setSelectedTone(tone.id)}
+              className={`text-left p-4 rounded-lg border-2 transition-all ${
+                selectedTone === tone.id
+                  ? "border-navy bg-white shadow-sm"
+                  : "border-border bg-white hover:border-muted-foreground/30"
+              }`}
+            >
+              <div className="font-semibold text-sm">{tone.label}</div>
+              <div className="text-xs text-muted-foreground mt-1">{tone.desc}</div>
+            </button>
+          ))}
         </div>
-      ) : (
-        <div className="text-center py-20 border-2 border-dashed rounded-lg bg-muted/10">
-          <FileTextIcon className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
-          <h3 className="text-lg font-medium mb-2">No letter generated yet</h3>
-          <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-            Click the generate button above to let our AI write a professional demand letter based on your case details.
-          </p>
+      </div>
+
+      <Button
+        onClick={handleGenerate}
+        disabled={generateMutation.isPending || missingFields}
+        className="w-full bg-navy hover:bg-navy/90 text-white gap-2 py-6 text-base"
+      >
+        {generateMutation.isPending ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <Mail className="h-5 w-5" />
+        )}
+        {generateMutation.isPending ? "Generating..." : letterContent ? "Regenerate Demand Letter" : "Generate Demand Letter"}
+      </Button>
+
+      {letterContent && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-sm">Letter Preview</h3>
+            <span className="text-xs text-muted-foreground">You can edit the text below before downloading.</span>
+          </div>
+          <div className="border rounded-lg bg-white">
+            <textarea
+              ref={textareaRef}
+              value={letterContent}
+              onChange={(e) => setLetterContent(e.target.value)}
+              className="w-full min-h-[500px] p-6 font-mono text-sm leading-relaxed resize-y focus:outline-none rounded-lg"
+              style={{ whiteSpace: "pre-wrap" }}
+            />
+          </div>
         </div>
       )}
     </div>
-  );
-}
-
-function FileTextIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-      <path d="M10 9H8" />
-      <path d="M16 13H8" />
-      <path d="M16 17H8" />
-    </svg>
   );
 }

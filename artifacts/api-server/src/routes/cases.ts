@@ -105,51 +105,84 @@ router.put("/cases/:caseId/intake", requireAuth, async (req: any, res) => {
 router.post("/cases/:caseId/demand-letter", requireAuth, async (req: any, res) => {
   try {
     const caseId = parseInt(req.params.caseId);
+    const tone = req.body?.tone || "formal";
     const [caseRecord] = await db.select().from(casesTable).where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
     if (!caseRecord) {
       return res.status(404).json({ error: "Case not found." });
     }
 
-    const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-    const letter = `${today}
+    const { openai } = await import("@workspace/integrations-openai-ai-server");
 
-${caseRecord.defendantName || "[Defendant Name]"}
-${caseRecord.defendantAddress || "[Defendant Address]"}
-${caseRecord.defendantCity || "[City]"}, ${caseRecord.defendantState || "CA"} ${caseRecord.defendantZip || "[Zip]"}
+    const toneInstructions: Record<string, string> = {
+      formal: "Write in a neutral, professional tone. State facts plainly without emotional language. Be businesslike and straightforward.",
+      firm: "Write in an assertive, deadline-focused tone. Emphasize the legal basis for the claim and consequences of non-payment. Be direct and authoritative.",
+      friendly: "Write in a cooperative tone that prefers settlement over court. Be polite but clear about expectations. Express hope for amicable resolution.",
+    };
 
-RE: Demand for Payment — ${caseRecord.claimType || "General Claim"}
+    const today = new Date();
+    const deadlineDate = new Date(today);
+    deadlineDate.setDate(deadlineDate.getDate() + 14);
 
-Dear ${caseRecord.defendantName || "[Defendant Name]"},
+    const systemPrompt = `You are a legal document writer specializing in California Small Claims Court demand letters. Generate a professional pre-litigation demand letter.
 
-I am writing to formally demand payment in the amount of $${caseRecord.amountClaimed || "[Amount]"} for the following matter:
+TONE INSTRUCTIONS: ${toneInstructions[tone] || toneInstructions.formal}
 
-${caseRecord.claimDescription || "[Description of claim]"}
+FORMATTING RULES:
+- Start with the plaintiff's full name, address, city/state/zip, and phone on separate lines
+- Then today's date on its own line
+- Then the defendant's name and address block
+- Use "RE:" line with claim type and amount
+- Address the defendant formally (Mr./Ms. last name or full name)
+- Include specific facts from the case
+- State the exact amount demanded with supporting details
+- Include a payment deadline (14 calendar days from today's date: ${deadlineDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })})
+- Mention intent to file in Small Claims Court if not resolved
+- Close with plaintiff's signature block
+- Use plain text formatting only, no markdown, no bold, no headers
+- The letter should read as a real, mail-ready document`;
 
-This amount was calculated as follows:
-${caseRecord.howAmountCalculated || "[Calculation details]"}
+    const userPrompt = `Generate a demand letter with the following case details:
 
-I have attempted to resolve this matter informally, but have been unable to reach a satisfactory resolution. If I do not receive payment within 30 days of the date of this letter, I intend to file a claim in California Small Claims Court.
+PLAINTIFF:
+- Name: ${caseRecord.plaintiffName || "[Plaintiff Name]"}
+- Address: ${caseRecord.plaintiffAddress || "[Address]"}
+- City/State/Zip: ${caseRecord.plaintiffCity || "[City]"}, ${caseRecord.plaintiffState || "CA"} ${caseRecord.plaintiffZip || "[Zip]"}
+- Phone: ${caseRecord.plaintiffPhone || "[Phone]"}
 
-Please make payment to:
-${caseRecord.plaintiffName || "[Your Name]"}
-${caseRecord.plaintiffAddress || "[Your Address]"}
-${caseRecord.plaintiffCity || "[City]"}, ${caseRecord.plaintiffState || "CA"} ${caseRecord.plaintiffZip || "[Zip]"}
+DEFENDANT:
+- Name: ${caseRecord.defendantName || "[Defendant Name]"}
+- Address: ${caseRecord.defendantAddress || "[Address]"}
+- City/State/Zip: ${caseRecord.defendantCity || "[City]"}, ${caseRecord.defendantState || "CA"} ${caseRecord.defendantZip || "[Zip]"}
 
-I hope we can resolve this matter without the need for court proceedings.
+CLAIM DETAILS:
+- Type: ${caseRecord.claimType || "General Claim"}
+- Amount: $${caseRecord.amountClaimed || "0"}
+- Description: ${caseRecord.claimDescription || "[No description provided]"}
+- How Amount Calculated: ${caseRecord.howAmountCalculated || "[Not specified]"}
+- Incident Date: ${caseRecord.incidentDateStart || "[Not specified]"}${caseRecord.incidentDateEnd ? ` to ${caseRecord.incidentDateEnd}` : ""}
+- Prior Demand Made: ${caseRecord.demandMade ? "Yes" : "No"}
+- Demand Details: ${caseRecord.demandDescription || "N/A"}
 
-Sincerely,
+Today's Date: ${today.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
 
-${caseRecord.plaintiffName || "[Your Name]"}
-${caseRecord.plaintiffPhone || "[Phone]"}
-${caseRecord.plaintiffEmail || "[Email]"}`;
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      max_completion_tokens: 4096,
+    });
 
-    const [updated] = await db.update(casesTable)
+    const letter = response.choices[0]?.message?.content || "Failed to generate letter. Please try again.";
+
+    await db.update(casesTable)
       .set({ demandLetter: letter, updatedAt: new Date() })
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)))
-      .returning();
+      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
 
     res.json({ demandLetter: letter });
-  } catch (err) {
+  } catch (err: any) {
+    console.error("Demand letter error:", err?.message || err);
     res.status(500).json({ error: "Failed to generate demand letter" });
   }
 });

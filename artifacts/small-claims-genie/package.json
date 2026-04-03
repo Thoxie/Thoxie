@@ -76,6 +76,7 @@
   },
   "dependencies": {
     "@clerk/react": "^6.1.4",
+    "jspdf": "^4.2.1",
     "react-markdown": "^10.1.0"
   }
 }

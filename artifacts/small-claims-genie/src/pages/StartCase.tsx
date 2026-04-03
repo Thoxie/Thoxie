@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 
 const claimTypes = [
+  "Money Owed",
   "Unpaid Debt",
   "Security Deposit",
   "Property Damage",
@@ -122,7 +123,7 @@ export default function StartCase() {
 
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-navy">
-                California County
+                California County <span className="text-red-500">*</span>
               </label>
               <select
                 value={county}
@@ -137,7 +138,7 @@ export default function StartCase() {
                 ))}
               </select>
               {errors.county && <p className="text-sm text-destructive">{errors.county}</p>}
-              {county && <p className="text-xs text-muted-foreground">{county}</p>}
+              <p className="text-xs text-muted-foreground">Usually where the defendant lives or where the incident happened.</p>
             </div>
 
             <button

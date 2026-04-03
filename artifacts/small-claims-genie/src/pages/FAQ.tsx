@@ -157,7 +157,7 @@ export default function FAQ() {
             </p>
             <Link
               href="/sign-up"
-              className="inline-flex h-12 items-center justify-center rounded-full bg-accent px-8 text-base font-bold text-accent-foreground shadow hover:opacity-90 transition-opacity gap-2"
+              className="inline-flex h-12 items-center justify-center rounded-full bg-gold px-8 text-base font-bold text-white shadow hover:bg-gold/90 transition-colors gap-2"
             >
               <Sparkles className="h-4 w-4" />
               Ask the Genie

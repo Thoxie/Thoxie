@@ -34,7 +34,7 @@ const selfHelp = [
   {
     title: "Small Claims Advisor Program",
     description: "Free legal advice from certified advisors before you file.",
-    url: "https://www.courts.ca.gov/9744.htm",
+    url: "https://www.courts.ca.gov/1196.htm",
   },
   {
     title: "Find Your Local Courthouse",
@@ -44,7 +44,7 @@ const selfHelp = [
   {
     title: "Filing Fees Waiver (Fee Waiver)",
     description: "Apply to waive filing fees if you cannot afford them.",
-    url: "https://www.courts.ca.gov/selfhelp-feewaiver.htm",
+    url: "https://www.courts.ca.gov/documents/fw001.pdf",
   },
 ];
 
@@ -52,22 +52,22 @@ const rules = [
   {
     title: "Small Claims Limits (2026)",
     description: "Individuals may claim up to $12,500. Businesses limited to $6,250.",
-    url: "https://www.courts.ca.gov/selfhelp-smallclaims.htm",
+    url: "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=116.220.&lawCode=CCP",
   },
   {
     title: "Statute of Limitations",
     description: "How long you have to file — varies by claim type. Act fast.",
-    url: "https://www.courts.ca.gov/9618.htm",
+    url: "https://www.courts.ca.gov/1201.htm",
   },
   {
     title: "Service of Process Rules",
     description: "How you are required to legally notify the defendant.",
-    url: "https://www.courts.ca.gov/selfhelp-serving.htm",
+    url: "https://www.courts.ca.gov/1202.htm",
   },
   {
     title: "What Happens at the Hearing",
     description: "What to expect on your court date and how to prepare.",
-    url: "https://www.courts.ca.gov/1014.htm",
+    url: "https://www.courts.ca.gov/1207.htm",
   },
 ];
 

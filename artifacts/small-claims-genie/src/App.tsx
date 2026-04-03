@@ -141,7 +141,7 @@ function ClerkProviderWithRoutes() {
             </Route>
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/types-of-cases" component={TypesOfCases} />
-            <Route path="/court" component={CourtInfo} />
+            <Route path="/resources" component={CourtInfo} />
             <Route path="/faq" component={FAQ} />
             <Route path="/contact" component={Contact} />
             <Route path="/disclaimers" component={Disclaimers} />

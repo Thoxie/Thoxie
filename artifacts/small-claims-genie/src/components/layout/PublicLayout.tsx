@@ -9,7 +9,7 @@ const navLinks = [
   { href: "/how-it-works", label: "How It Works" },
   { href: "/types-of-cases", label: "Types of Cases" },
   { href: "/faq", label: "FAQ" },
-  { href: "/court", label: "Resources" },
+  { href: "/resources", label: "Resources" },
 ];
 
 export function PublicLayout({ children }: { children: ReactNode }) {
@@ -81,7 +81,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 <div className="flex flex-col gap-2 text-sm text-white/70">
                   <Link href="/" className="hover:text-white">Home</Link>
                   <Link href="/faq" className="hover:text-white">FAQ</Link>
-                  <Link href="/court" className="hover:text-white">Resources</Link>
+                  <Link href="/resources" className="hover:text-white">Resources</Link>
                 </div>
               </div>
               <div>

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { getAuth } from "@clerk/express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { db } from "@workspace/db";
-import { casesTable, documentsTable } from "@workspace/db";
+import { casesTable, documentsTable, documentChunksTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 
 const router = Router();
@@ -50,19 +50,70 @@ CASE INFORMATION:
 - Venue Basis: ${caseRecord.venueBasis || "N/A"}
 `;
 
-        const docs = await db.select({
-          fileName: documentsTable.fileName,
-          textContent: documentsTable.textContent,
-        }).from(documentsTable).where(eq(documentsTable.caseId, caseId));
+        const chunks = await db.select({
+          content: documentChunksTable.content,
+          chunkIndex: documentChunksTable.chunkIndex,
+          documentId: documentChunksTable.documentId,
+        }).from(documentChunksTable).where(eq(documentChunksTable.caseId, caseId));
 
-        if (docs.length > 0) {
-          const docTexts = docs
-            .filter(d => d.textContent)
-            .map(d => `--- Document: ${d.fileName} ---\n${d.textContent!.substring(0, 8000)}`)
-            .join("\n\n");
+        if (chunks.length > 0) {
+          const docs = await db.select({
+            id: documentsTable.id,
+            fileName: documentsTable.fileName,
+          }).from(documentsTable).where(eq(documentsTable.caseId, caseId));
 
-          if (docTexts) {
-            documentContext = `\nUPLOADED DOCUMENTS:\n${docTexts}\n`;
+          const docNameMap = new Map(docs.map(d => [d.id, d.fileName]));
+
+          const grouped = new Map<number, { fileName: string; chunks: { index: number; content: string }[] }>();
+          for (const chunk of chunks) {
+            if (!grouped.has(chunk.documentId)) {
+              grouped.set(chunk.documentId, {
+                fileName: docNameMap.get(chunk.documentId) || "Unknown",
+                chunks: [],
+              });
+            }
+            grouped.get(chunk.documentId)!.chunks.push({ index: chunk.chunkIndex, content: chunk.content });
+          }
+
+          let docTexts: string[] = [];
+          let totalLength = 0;
+          const MAX_DOC_CONTEXT = 30000;
+
+          for (const [, docGroup] of grouped) {
+            docGroup.chunks.sort((a, b) => a.index - b.index);
+            const fullText = docGroup.chunks.map(c => c.content).join(" ");
+            const entry = `--- Document: ${docGroup.fileName} ---\n${fullText}`;
+
+            if (totalLength + entry.length > MAX_DOC_CONTEXT) {
+              const remaining = MAX_DOC_CONTEXT - totalLength;
+              if (remaining > 500) {
+                docTexts.push(`--- Document: ${docGroup.fileName} ---\n${fullText.substring(0, remaining)}... [truncated]`);
+              }
+              break;
+            }
+
+            docTexts.push(entry);
+            totalLength += entry.length;
+          }
+
+          if (docTexts.length > 0) {
+            documentContext = `\nUPLOADED DOCUMENTS (${docs.length} documents, ${chunks.length} text chunks):\n${docTexts.join("\n\n")}\n`;
+          }
+        } else {
+          const docs = await db.select({
+            fileName: documentsTable.fileName,
+            textContent: documentsTable.textContent,
+          }).from(documentsTable).where(eq(documentsTable.caseId, caseId));
+
+          if (docs.length > 0) {
+            const docTexts = docs
+              .filter(d => d.textContent)
+              .map(d => `--- Document: ${d.fileName} ---\n${d.textContent!.substring(0, 10000)}`)
+              .join("\n\n");
+
+            if (docTexts) {
+              documentContext = `\nUPLOADED DOCUMENTS:\n${docTexts}\n`;
+            }
           }
         }
       }

@@ -51,6 +51,7 @@ artifacts-monorepo/
 - **cases** — User's small claims cases with plaintiff/defendant info, claim details, intake progress, demand/venue info, eligibility flags
   - Key fields: `demandDescription`, `incidentDateStart`, `incidentDateEnd`, `venueBasis`, `suingPublicEntity`, `disputeAttorneyFees`, `filedOver12`, `filedOver2500`, `county`, `courthouse`
 - **documents** — File uploads attached to cases (`fileData` base64, `textContent` extracted text)
+- **document_chunks** — Chunked text from documents for AI retrieval (2000-char chunks with 200-char overlap, linked by `document_id` + `case_id`)
 - **conversations** — Chat session records (defined but not yet wired to AI chat)
 - **messages** — Individual chat messages within conversations (defined but not yet wired)
 
@@ -61,7 +62,7 @@ artifacts-monorepo/
 - `GET/PUT/DELETE /api/cases/:id` — Case CRUD (auth required, body sanitized — userId/id/createdAt stripped)
 - `PUT /api/cases/:id/intake` — Save intake wizard progress (auth required, body sanitized)
 - `POST /api/cases/:id/demand-letter` — AI-powered demand letter generation with `tone` param (formal/firm/friendly)
-- `GET/POST /api/cases/:id/documents` — List/upload documents with text extraction (PDF via pdf-parse, DOCX via mammoth)
+- `GET/POST /api/cases/:id/documents` — List/upload documents with text extraction (PDF via pdf-parse, DOCX via mammoth, images via OpenAI Vision OCR), auto-chunks text into `document_chunks` table
 - `DELETE /api/cases/:id/documents/:docId` — Delete document (auth required)
 - `GET /api/cases/:id/forms/sc100` — Generate auto-filled SC-100 PDF (auth required)
 - `GET /api/cases/:id/forms/sc100.docx` — Generate auto-filled SC-100 Word document (auth required)

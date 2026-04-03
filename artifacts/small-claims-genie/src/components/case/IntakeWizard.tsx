@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -93,9 +94,9 @@ export function IntakeWizard({ caseData }: { caseData: any }) {
         <span className="text-sm text-muted-foreground">Step {step} of 4</span>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         {[1, 2, 3, 4].map(s => (
-          <div key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-navy" : "bg-border"}`} />
+          <div key={s} className={`h-2.5 flex-1 rounded-full ${s <= step ? "bg-navy" : "bg-gray-200"}`} />
         ))}
       </div>
 
@@ -216,9 +217,23 @@ export function IntakeWizard({ caseData }: { caseData: any }) {
           </div>
           <div>
             <Label>When did this happen? <span className="text-red-500">*</span></Label>
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <Input type="date" value={formData.incidentDateStart} onChange={e => handleChange("incidentDateStart", e.target.value)} className="bg-white" />
-              <Input type="date" value={formData.incidentDateEnd} onChange={e => handleChange("incidentDateEnd", e.target.value)} className="bg-white" />
+            <div className="relative mt-1">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <div className="flex items-center border rounded-md bg-white pl-10 pr-3 py-2 text-sm">
+                <input
+                  type="date"
+                  value={formData.incidentDateStart}
+                  onChange={e => handleChange("incidentDateStart", e.target.value)}
+                  className="bg-transparent outline-none border-none flex-1"
+                />
+                <span className="text-muted-foreground mx-2">–</span>
+                <input
+                  type="date"
+                  value={formData.incidentDateEnd}
+                  onChange={e => handleChange("incidentDateEnd", e.target.value)}
+                  className="bg-transparent outline-none border-none flex-1"
+                />
+              </div>
             </div>
             <p className="text-xs text-muted-foreground mt-1">Select a single date or a date range.</p>
           </div>
@@ -285,9 +300,19 @@ export function IntakeWizard({ caseData }: { caseData: any }) {
                 { field: "filedOver12", label: "Filed more than 12 small claims in California in the past 12 months?" },
                 { field: "filedOver2500", label: "Claim over $2,500: Have you filed 2+ other small claims over $2,500 in CA this calendar year?" },
               ].map(q => (
-                <label key={q.field} className="flex items-start gap-3 p-3 rounded-lg border border-border/60 bg-white cursor-pointer hover:border-navy/30 transition-colors">
-                  <input type="checkbox" checked={formData[q.field as keyof typeof formData] as boolean} onChange={e => handleChange(q.field, e.target.checked)} className="accent-navy mt-0.5" />
+                <label key={q.field} className="flex items-start gap-3 p-4 rounded-lg border border-border/60 bg-white cursor-pointer hover:border-navy/30 transition-colors">
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
+                      formData[q.field as keyof typeof formData] ? "border-navy bg-navy" : "border-gray-300"
+                    }`}
+                    onClick={() => handleChange(q.field, !formData[q.field as keyof typeof formData])}
+                  >
+                    {formData[q.field as keyof typeof formData] && (
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </div>
                   <span className="text-sm">{q.label}</span>
+                  <input type="checkbox" checked={formData[q.field as keyof typeof formData] as boolean} onChange={e => handleChange(q.field, e.target.checked)} className="sr-only" />
                 </label>
               ))}
             </div>
@@ -359,7 +384,7 @@ export function IntakeWizard({ caseData }: { caseData: any }) {
           <button
             type="button"
             onClick={() => handleSave(5)}
-            className="px-6 py-2.5 rounded-lg bg-accent text-accent-foreground text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+            className="px-6 py-2.5 rounded-lg bg-gold text-white text-sm font-bold hover:bg-gold/90 transition-colors flex items-center gap-2"
           >
             Complete Intake ✓
           </button>

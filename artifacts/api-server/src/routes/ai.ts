@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
+import { openai, toFile } from "@workspace/integrations-openai-ai-server";
 import { db } from "@workspace/db";
 import { documentsTable, documentChunksTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -138,12 +138,11 @@ router.post("/ai/transcribe", requireAuth, async (req, res) => {
     if (!audioData) return res.status(400).json({ error: "Audio data is required" });
 
     const buffer = Buffer.from(audioData, "base64");
-    const file = new File([buffer], "recording.webm", { type: "audio/webm" });
+    const file = await toFile(buffer, "recording.webm", { type: "audio/webm" });
 
     const transcription = await openai.audio.transcriptions.create({
-      model: "gpt-4o-mini-transcribe",
+      model: "whisper-1",
       file,
-      response_format: "json",
     });
 
     res.json({ text: transcription.text || "" });

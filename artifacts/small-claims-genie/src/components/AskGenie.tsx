@@ -60,7 +60,8 @@ export function AskGenie({ caseData }: { caseData?: any }) {
         setQuestion(data.text);
       }
     },
-    onError: () => {
+    onError: (err) => {
+      console.error("Transcription failed:", err);
       setQuestion("");
     }
   });
@@ -163,9 +164,11 @@ export function AskGenie({ caseData }: { caseData?: any }) {
         </div>
       )}
 
-      <div className="text-center text-xs text-muted-foreground py-1">
-        {isRecording ? "Recording... release to send" : "Press to record · release to send"}
-      </div>
+      {(isRecording || transcribeMutation.isPending) && (
+        <div className="text-center text-xs text-muted-foreground py-1">
+          {transcribeMutation.isPending ? "Transcribing..." : "Recording... release to transcribe"}
+        </div>
+      )}
 
       <div className="px-2 pb-2">
         <form onSubmit={handleSubmit} className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Link } from "wouter";
-import { FileText, Upload, ClipboardCheck, Sparkles } from "lucide-react";
+import { FileText, Upload, ClipboardCheck, Sparkles, MessageSquare } from "lucide-react";
 
 export default function Home() {
   return (
@@ -37,7 +37,7 @@ export default function Home() {
               </div>
               <h3 className="text-lg font-bold text-navy mb-2">Court-Ready Intake Forms</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Guided 4-step intake collects every field required for your SC-100 — legally complete, nothing missed.
+                Guided 7-step intake collects every field required for your SC-100 — legally complete, nothing missed.
               </p>
             </div>
             <div className="bg-white rounded-xl p-6 border border-border/60">
@@ -73,7 +73,7 @@ export default function Home() {
               <div className="text-4xl font-extrabold text-gold mb-2">01</div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                 <FileText className="h-3.5 w-3.5" />
-                4-Step Intake Wizard
+                7-Step Intake Wizard
               </div>
               <h3 className="text-lg font-bold text-navy mb-2">Tell Us What Happened</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -116,12 +116,15 @@ export default function Home() {
             {[
               "Contractors & Home Services",
               "Landlord & Tenant Disputes",
+              "Security Deposit",
               "Auto Repair Issues",
               "Breach of Contract",
               "Unrefunded Payments & Chargebacks",
               "Airline & Travel Cancellations",
+              "Airbnb / VRBO / Hotel Issues",
               "Property Damage",
               "Personal Injury (minor)",
+              "Online Purchases",
               "Loan Repayment"
             ].map((type) => (
               <div key={type} className="bg-white rounded-lg px-5 py-4 border border-border/60 flex items-center gap-3">
@@ -130,6 +133,9 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <p className="text-center text-sm text-muted-foreground mt-8 max-w-xl mx-auto">
+            Not sure which one you have? Describe what happened in plain English. Small Claims Genie will classify the dispute, flag missing proof, and tell you the next step.
+          </p>
         </div>
       </section>
 
@@ -137,7 +143,7 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center max-w-2xl">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to file your claim?</h2>
           <p className="text-lg text-white/70 mb-8">
-            Don't let the legal process intimidate you. Organize your case, generate your forms, and get ready for court today.
+            Don't pay a lawyer. Use Small Claims Genie. Organize your case, generate your forms, and get ready for court today.
           </p>
           <Link href="/sign-up" className="inline-flex h-14 items-center justify-center rounded-full bg-orange px-10 text-lg font-bold text-white shadow-lg hover:opacity-90 transition-opacity">
             Start Your Case Free

@@ -1,10 +1,41 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMutation } from "@tanstack/react-query";
 import { useAskGenie } from "@workspace/api-client-react";
-import { useAuth } from "@clerk/react";
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition: new () => SpeechRecognitionInstance;
+  }
+}
+
+function getSpeechRecognition(): (new () => SpeechRecognitionInstance) | null {
+  if (typeof window === "undefined") return null;
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
 
 export function AskGenie({ caseData }: { caseData?: any }) {
   const [question, setQuestion] = useState("");
@@ -12,14 +43,10 @@ export function AskGenie({ caseData }: { caseData?: any }) {
     { role: 'assistant', content: 'Hi there! I am your Small Claims Genie. Ask me anything about your case, California small claims court procedures, or I can analyze your uploaded documents.' }
   ]);
   const [isRecording, setIsRecording] = useState(false);
-  const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0));
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number>(0);
-  const streamRef = useRef<MediaStream | null>(null);
+  const [interimText, setInterimText] = useState("");
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { getToken } = useAuth();
+  const speechSupported = !!getSpeechRecognition();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -38,94 +65,70 @@ export function AskGenie({ caseData }: { caseData?: any }) {
     }
   });
 
-  const transcribeMutation = useMutation({
-    mutationFn: async (audioBlob: Blob) => {
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onload = () => resolve((reader.result as string).split(",")[1] || "");
-        reader.readAsDataURL(audioBlob);
-      });
-      const basePath = import.meta.env.BASE_URL || "/";
-      const token = await getToken();
-      const res = await fetch(`${basePath}api/ai/transcribe`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ audioData: base64 }),
-      });
-      if (!res.ok) throw new Error("Transcription failed");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      if (data.text) {
-        setQuestion(data.text);
-      }
-    },
-    onError: (err) => {
-      console.error("Transcription failed:", err);
-      setQuestion("");
-    }
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!question.trim()) return;
-    setMessages(prev => [...prev, { role: 'user', content: question }]);
-    mutation.mutate({ data: { question, caseId: caseData?.id } });
+    const fullText = (question + interimText).trim();
+    if (!fullText) return;
+    if (isRecording) stopRecording();
+    setMessages(prev => [...prev, { role: 'user', content: fullText }]);
+    mutation.mutate({ data: { question: fullText, caseId: caseData?.id } });
     setQuestion("");
+    setInterimText("");
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 64;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-
-      const updateLevels = () => {
-        if (!analyserRef.current) return;
-        const data = new Uint8Array(analyserRef.current.frequencyBinCount);
-        analyserRef.current.getByteFrequencyData(data);
-        const levels = Array.from(data.slice(0, 20)).map(v => v / 255);
-        setAudioLevels(levels);
-        animFrameRef.current = requestAnimationFrame(updateLevels);
-      };
-      updateLevels();
-    } catch {
-      console.error("Microphone access denied");
+  const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
-  };
+  }, []);
 
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        transcribeMutation.mutate(audioBlob);
-      };
-      mediaRecorderRef.current.stop();
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
-      streamRef.current = null;
-    }
-    cancelAnimationFrame(animFrameRef.current);
-    setIsRecording(false);
-    setAudioLevels(new Array(20).fill(0));
-  };
+  const startRecording = useCallback(() => {
+    const SpeechRecognitionCtor = getSpeechRecognition();
+    if (!SpeechRecognitionCtor) return;
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognitionRef.current = recognition;
+
+    const baseText = question;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let finalPart = "";
+      let interimPart = "";
+      for (let i = 0; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalPart += transcript;
+        } else {
+          interimPart += transcript;
+        }
+      }
+      const prefix = baseText ? baseText + " " : "";
+      setQuestion(prefix + finalPart);
+      setInterimText(interimPart);
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error);
+      setIsRecording(false);
+      setInterimText("");
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      setInterimText((prev) => {
+        if (prev) {
+          setQuestion((q) => q + prev);
+        }
+        return "";
+      });
+    };
+
+    recognition.start();
+    setIsRecording(true);
+  }, [question]);
 
   return (
     <div className="flex flex-col h-full">
@@ -153,20 +156,22 @@ export function AskGenie({ caseData }: { caseData?: any }) {
       </div>
 
       {isRecording && (
-        <div className="flex items-center justify-center gap-1 py-3 bg-navy/5 rounded-lg mx-2 mb-2">
-          {audioLevels.map((level, i) => (
-            <div
-              key={i}
-              className="w-1 bg-navy rounded-full transition-all duration-75"
-              style={{ height: `${Math.max(4, level * 32)}px` }}
-            />
-          ))}
+        <div className="flex items-center justify-center gap-2 py-3 bg-navy/5 rounded-lg mx-2 mb-2">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-xs font-medium text-navy">Listening...</span>
+          </div>
+          {(question || interimText) && (
+            <span className="text-xs text-muted-foreground italic truncate max-w-[200px]">
+              {question}{interimText && <span className="opacity-50">{interimText}</span>}
+            </span>
+          )}
         </div>
       )}
 
-      {(isRecording || transcribeMutation.isPending) && (
+      {isRecording && (
         <div className="text-center text-xs text-muted-foreground py-1">
-          {transcribeMutation.isPending ? "Transcribing..." : "Recording... release to transcribe"}
+          Speak now — click mic again to stop
         </div>
       )}
 
@@ -174,31 +179,29 @@ export function AskGenie({ caseData }: { caseData?: any }) {
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
           <div className="relative flex-1">
             <Input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
+              value={question + (interimText ? interimText : "")}
+              onChange={(e) => { setQuestion(e.target.value); setInterimText(""); }}
               placeholder="Ask Small Claims Genie a question..."
               className="bg-white pr-10"
-              disabled={mutation.isPending || isRecording}
-            />
-            <button
-              type="button"
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onMouseLeave={() => { if (isRecording) stopRecording(); }}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${
-                isRecording ? "bg-red-500 text-white" : "text-muted-foreground hover:text-foreground"
-              }`}
               disabled={mutation.isPending}
-            >
-              <Mic className="h-4 w-4" />
-            </button>
+            />
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full transition-colors ${
+                  isRecording ? "bg-red-500 text-white" : "text-muted-foreground hover:text-foreground"
+                }`}
+                disabled={mutation.isPending}
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            )}
           </div>
           <Button
             type="submit"
             size="icon"
-            disabled={!question.trim() || mutation.isPending}
+            disabled={!(question + interimText).trim() || mutation.isPending}
             className="bg-gold hover:bg-gold/90 text-navy rounded-full h-10 w-10 shrink-0"
           >
             <Send className="h-4 w-4" />

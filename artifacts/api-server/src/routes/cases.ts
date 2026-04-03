@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { openai } from "@workspace/integrations-openai-ai-server";
 import { db } from "@workspace/db";
 import { casesTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
@@ -96,8 +97,6 @@ router.post("/cases/:caseId/demand-letter", requireAuth, async (req, res) => {
     const tone = req.body?.tone || "formal";
     const c = await getCaseForUser(caseId, userId);
     if (!c) return res.status(404).json({ error: "Case not found." });
-
-    const { openai } = await import("@workspace/integrations-openai-ai-server");
 
     const toneInstructions: Record<string, string> = {
       formal: "Write in a neutral, professional tone. State facts plainly without emotional language. Be businesslike and straightforward.",

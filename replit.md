@@ -63,6 +63,8 @@ artifacts-monorepo/
 - `GET/POST /api/cases/:id/documents` — List/upload documents with text extraction (PDF via pdf-parse, DOCX via mammoth)
 - `DELETE /api/cases/:id/documents/:docId` — Delete document (auth required)
 - `GET /api/cases/:id/forms/sc100` — Generate auto-filled SC-100 PDF (auth required)
+- `GET /api/cases/:id/forms/sc100.docx` — Generate auto-filled SC-100 Word document (auth required)
+- `GET /api/cases/:id/forms/readiness` — Readiness score with strengths/weaknesses checklist (auth required)
 - `GET /api/dashboard` — Dashboard summary (auth required)
 - `POST /api/ai/ask` — AI assistant Q&A with case + document context (auth required)
 - `POST /api/ai/transcribe` — Voice-to-text transcription via OpenAI Whisper (auth required)

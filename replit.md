@@ -76,7 +76,7 @@ artifacts-monorepo/
 - `/types-of-cases` — Types of small claims cases (public)
 - `/faq` — 21 Q&A frequently asked questions (public)
 - `/resources` — Court information and resources (public)
-- `/start-case` — Create new case form (auth required)
+- `/cases/new` — Create new case form (auth required)
 - `/dashboard` — Case management dashboard (auth required)
 - `/cases/:id` — Case detail with 5 tabs: Intake, Documents, Ask The Genie AI, Demand Letter, Forms
 - `/sign-in`, `/sign-up` — Clerk authentication

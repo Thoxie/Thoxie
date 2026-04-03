@@ -126,10 +126,7 @@ function ClerkProviderWithRoutes() {
           <Switch>
             <Route path="/" component={HomeRedirect} />
             <Route path="/dashboard" component={DashboardRoute} />
-            <Route path="/cases/:id">
-              {(params) => <CaseDetailRoute id={params.id} />}
-            </Route>
-            <Route path="/start-case">
+            <Route path="/cases/new">
               <>
                 <Show when="signed-in">
                   <StartCase />
@@ -138,6 +135,9 @@ function ClerkProviderWithRoutes() {
                   <Redirect to="/sign-up" />
                 </Show>
               </>
+            </Route>
+            <Route path="/cases/:id">
+              {(params) => <CaseDetailRoute id={params.id} />}
             </Route>
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/types-of-cases" component={TypesOfCases} />

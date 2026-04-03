@@ -1,7 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { FileDown, ExternalLink } from "lucide-react";
+import { FileDown, ExternalLink, Loader2 } from "lucide-react";
+import { useAuth } from "@clerk/react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function FormsTab({ caseData }: { caseData: any }) {
+  const { getToken } = useAuth();
+  const { toast } = useToast();
+  const [downloading, setDownloading] = useState(false);
+
   const forms = [
     {
       id: "SC-100",
@@ -40,48 +47,75 @@ export function FormsTab({ caseData }: { caseData: any }) {
     }
   ];
 
+  const handleDownloadSC100 = async () => {
+    setDownloading(true);
+    try {
+      const basePath = import.meta.env.BASE_URL || "/";
+      const token = await getToken();
+      const res = await fetch(`${basePath}api/cases/${caseData.id}/forms/sc100`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to generate");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SC-100_${caseData.plaintiffName?.replace(/\s+/g, "_") || "Case"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast({ title: "SC-100 downloaded!" });
+    } catch {
+      toast({ title: "Failed to generate SC-100", variant: "destructive" });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">Court Forms</h2>
-        <p className="text-muted-foreground">Official fillable PDFs from the California Courts system.</p>
+        <h2 className="text-xl font-bold text-navy">Court Forms</h2>
+        <p className="text-sm text-muted-foreground mt-1">Official fillable PDFs from the California Courts system.</p>
       </div>
 
       {caseData.intakeComplete ? (
-        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6 text-primary flex items-start gap-3">
-          <div className="mt-1"><SparklesIcon /></div>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+          <div className="mt-1 text-green-700"><SparklesIcon /></div>
           <div>
-            <h4 className="font-semibold">Auto-Fill Ready</h4>
-            <p className="text-sm mt-1">Since you completed the intake wizard, our system can auto-fill SC-100 for you. Download the pre-filled version below.</p>
-            <Button size="sm" className="mt-3">
-              <FileDown className="h-4 w-4 mr-2" />
-              Download Auto-Filled SC-100
+            <h4 className="font-semibold text-green-800">Auto-Fill Ready</h4>
+            <p className="text-sm text-green-700 mt-1">
+              Since you completed the intake wizard, our system can auto-fill SC-100 for you. Download the pre-filled version below.
+            </p>
+            <Button size="sm" className="mt-3 bg-navy hover:bg-navy/90 gap-2" onClick={handleDownloadSC100} disabled={downloading}>
+              {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+              {downloading ? "Generating..." : "Download Auto-Filled SC-100"}
             </Button>
           </div>
         </div>
       ) : (
-        <div className="bg-muted p-4 rounded-lg text-sm mb-6">
+        <div className="bg-gold/10 border-l-4 border-gold p-4 text-sm">
           <strong>Tip:</strong> Complete the Intake Wizard to enable auto-filling of your court forms.
         </div>
       )}
 
       <div className="grid gap-4">
         {forms.map((form) => (
-          <div key={form.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-lg bg-card">
+          <div key={form.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border rounded-xl bg-white">
             <div className="mb-4 sm:mb-0">
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-lg">{form.id}</h3>
+                <h3 className="font-bold text-base text-navy">{form.id}</h3>
                 {form.required && (
-                  <span className="bg-accent/20 text-accent-foreground text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded">Required</span>
+                  <span className="bg-orange/10 text-orange text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded">Required</span>
                 )}
               </div>
               <p className="font-medium text-sm mt-1">{form.title}</p>
-              <p className="text-sm text-muted-foreground">{form.description}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{form.description}</p>
             </div>
-            
-            <Button variant="outline" asChild>
-              <a href={form.url} target="_blank" rel="noreferrer" className="flex items-center">
-                Blank PDF <ExternalLink className="h-4 w-4 ml-2" />
+            <Button variant="outline" size="sm" asChild className="shrink-0">
+              <a href={form.url} target="_blank" rel="noreferrer" className="flex items-center gap-2">
+                Blank PDF <ExternalLink className="h-3.5 w-3.5" />
               </a>
             </Button>
           </div>

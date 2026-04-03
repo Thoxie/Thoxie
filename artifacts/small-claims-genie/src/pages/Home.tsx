@@ -1,18 +1,18 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Link } from "wouter";
-import { FileText, Upload, ClipboardCheck, Sparkles, MessageSquare } from "lucide-react";
+import { FileText, Upload, ClipboardCheck, Sparkles, CheckCircle2 } from "lucide-react";
 
 export default function Home() {
   return (
     <PublicLayout>
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container mx-auto px-4 max-w-4xl">
+      <section className="py-16 md:py-24 px-4" style={{ backgroundColor: "#ddf6f3" }}>
+        <div className="container mx-auto max-w-4xl">
           <h1 className="text-3xl md:text-5xl font-extrabold text-navy leading-tight mb-6">
             Win in Small Claims Court.<br />
             Don't lose because you're unprepared.<br />
             Get your money back!
           </h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mb-8">
+          <p className="text-base text-primary/65 mb-5 max-w-xl leading-relaxed">
             Small Claims Genie walks you through every step — intake, evidence, AI chat,
             demand letters and your court-ready forms, ready to file. No lawyer needed.
           </p>
@@ -28,9 +28,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-12 bg-background border-t border-border/50">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="grid md:grid-cols-3 gap-6">
+      <section className="px-4 pt-5 pb-5 bg-white">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="bg-white rounded-xl p-6 border border-border/60">
               <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <FileText className="h-5 w-5 text-navy" />
@@ -62,13 +62,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="how-it-works" className="py-16 bg-background">
+      <section id="how-it-works" className="py-16 bg-white">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-navy mb-2">How It Works</h2>
-            <p className="text-muted-foreground">Three steps from dispute to ready-to-file.</p>
+            <p className="text-primary/60 text-base max-w-xl mx-auto">Three steps from dispute to ready-to-file.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-5">
             <div className="bg-[#dbeafe]/50 rounded-xl p-6 border border-blue-200/40">
               <div className="text-4xl font-extrabold text-gold mb-2">01</div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
@@ -135,6 +135,41 @@ export default function Home() {
           </div>
           <p className="text-center text-sm text-muted-foreground mt-8 max-w-xl mx-auto">
             Not sure which one you have? Describe what happened in plain English. Small Claims Genie will classify the dispute, flag missing proof, and tell you the next step.
+          </p>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 bg-gray-50">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-2 text-primary">Simple, Transparent Pricing</h2>
+          <p className="text-muted-foreground mb-7 max-w-xl mx-auto text-base">
+            Prepare your entire case for free. Pay only when you're ready to download your final court forms.
+          </p>
+          <div className="p-7 border-2 border-amber-200 rounded-3xl bg-white shadow-xl max-w-sm mx-auto">
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="Small Claims Genie" className="h-10 w-auto mx-auto mb-4" />
+            <div className="text-5xl font-black text-primary mb-1">$89</div>
+            <div className="text-muted-foreground text-sm mb-1">per month · per case</div>
+            <ul className="text-sm text-left space-y-2 text-muted-foreground my-5 pl-1">
+              {[
+                "Full 7-step intake wizard",
+                "Unlimited document uploads + AI OCR",
+                "Unlimited AI chat sessions",
+                "SC-100 PDF download",
+                "Step-by-step filing checklist"
+              ].map((feature) => (
+                <li key={feature} className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <Link href="/cases/new" className="inline-flex w-full h-12 items-center justify-center rounded-full bg-amber-500 text-white hover:bg-amber-600 text-base font-bold shadow-lg transition-colors gap-2">
+              <Sparkles className="h-4 w-4" />
+              Start Your Case Free
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground mt-5 max-w-md mx-auto leading-relaxed">
+            Filing fees vary by court and by claim amount, and service costs vary depending on location and difficulty. Small Claims Genie's platform fee is separate from court fees and service costs, which are set by the local jurisdiction.
           </p>
         </div>
       </section>

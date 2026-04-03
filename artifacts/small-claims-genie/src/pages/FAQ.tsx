@@ -89,6 +89,11 @@ const faqs = [
       "Winning a judgment means the court agrees the defendant owes you money. If the defendant pays voluntarily, the case is resolved. If they do not pay, additional steps may be required to collect the judgment. Small Claims Genie can help explain the common options available for enforcing a judgment.",
   },
   {
+    question: "What if the defendant doesn't show up?",
+    answer:
+      "If properly served, the judge will likely rule in your favor by default.",
+  },
+  {
     question: "What happens if the defendant cannot be found?",
     answer:
       "Process servers typically attempt service multiple times. If they can't complete service, you may need a better address, a different service location, or additional steps to locate the defendant. Small Claims Genie helps you understand the next best option so the case doesn't stall.",
@@ -97,6 +102,11 @@ const faqs = [
     question: "What if I lose the case?",
     answer:
       "If the court decides against your claim, the case usually ends at that point. In some situations there may be options to appeal or take other legal steps depending on local rules. Small Claims Genie helps you prepare a clear, well-supported case from the start to improve your chances.",
+  },
+  {
+    question: "How do I collect my money after winning?",
+    answer:
+      "Winning a judgment doesn't automatically mean you'll be paid. You may need to garnish wages or levy a bank account.",
   },
   {
     question: "Is my information secure when using Small Claims Genie?",

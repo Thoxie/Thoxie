@@ -41,6 +41,16 @@ const caseTypes = [
     description:
       "File temporary vacation rental related claims for cancellations, unsafe conditions, property damage, withheld deposits, or misrepresentation. We help you organize messages, photos, receipts, and a clean timeline so your damages are easy to prove.",
   },
+  {
+    title: "Security Deposit",
+    description:
+      "Withheld deposits, wrongful deductions, or failure to return your security deposit within the legal timeframe. We help you organize your lease, move-in/move-out documentation, photos, and correspondence to support a clear refund claim.",
+  },
+  {
+    title: "Property Damage",
+    description:
+      "Damage to your property caused by another person, business, or neighbor. We help you document the damage with photos, repair estimates, insurance correspondence, and a timeline that shows who caused it and what it costs to fix.",
+  },
 ];
 
 export default function TypesOfCases() {

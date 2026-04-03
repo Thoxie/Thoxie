@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Plus } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { SignOutButton } from "@clerk/react";
 import { Button } from "@/components/ui/button";
 
@@ -18,7 +18,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
 
   return (
-    <div className="min-h-[100dvh] flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col bg-white text-foreground">
       <header className="sticky top-0 z-40 w-full bg-white shadow-sm">
         <div className="container mx-auto px-6 h-[106px] flex items-center justify-between">
           <Link href="/" className="flex items-center shrink-0">
@@ -55,7 +55,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Link>
             <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-sm rounded-full px-5">
               <Link href="/cases/new">
-                <Plus className="mr-1.5 h-4 w-4" />
+                <Sparkles className="mr-1.5 h-4 w-4" />
                 Start Your Case
               </Link>
             </Button>
@@ -68,7 +68,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      <footer className="border-t py-8">
+      <footer className="border-t py-8" style={{ backgroundColor: "#ddf6f3" }}>
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3">
             <p className="text-sm text-primary/60">

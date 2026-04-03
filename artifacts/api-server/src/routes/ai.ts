@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { openai, toFile } from "@workspace/integrations-openai-ai-server";
 import { db } from "@workspace/db";
-import { documentsTable, documentChunksTable } from "@workspace/db";
+import { casesTable, documentsTable, documentChunksTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../middlewares/requireAuth";
 import { getCaseForUser } from "../lib/caseHelpers";
@@ -13,9 +13,14 @@ const MAX_DOC_CONTEXT = 30000;
 function buildCaseContext(c: any): string {
   return `
 CASE INFORMATION:
-- Plaintiff: ${c.plaintiffName || "N/A"}, ${c.plaintiffAddress || ""} ${c.plaintiffCity || ""}, ${c.plaintiffState || "CA"} ${c.plaintiffZip || ""}
+- Case ID: ${c.id}
+- Plaintiff: ${c.plaintiffName || "N/A"}
+- Plaintiff Address: ${c.plaintiffAddress || ""} ${c.plaintiffCity || ""}, ${c.plaintiffState || "CA"} ${c.plaintiffZip || ""}
 - Plaintiff Phone: ${c.plaintiffPhone || "N/A"}
-- Defendant: ${c.defendantName || "N/A"}, ${c.defendantAddress || ""} ${c.defendantCity || ""}, ${c.defendantState || "CA"} ${c.defendantZip || ""}
+- Plaintiff Email: ${c.plaintiffEmail || "N/A"}
+- Defendant: ${c.defendantName || "N/A"}
+- Defendant Address: ${c.defendantAddress || ""} ${c.defendantCity || ""}, ${c.defendantState || "CA"} ${c.defendantZip || ""}
+- Defendant Phone: ${c.defendantPhone || "N/A"}
 - Claim Type: ${c.claimType || "N/A"}
 - Amount Claimed: $${c.amountClaimed || "N/A"}
 - Incident Date: ${c.incidentDateStart || "N/A"}${c.incidentDateEnd ? ` to ${c.incidentDateEnd}` : ""}
@@ -23,9 +28,19 @@ CASE INFORMATION:
 - How Amount Calculated: ${c.howAmountCalculated || "N/A"}
 - Demand Made: ${c.demandMade ? "Yes" : "No"}
 - Demand Description: ${c.demandDescription || "N/A"}
+- Attorney Fee Dispute: ${c.isAttyFeeDispute ? "Yes" : "No"}
+- Dispute Attorney Fees: ${c.disputeAttorneyFees ? "Yes" : "No"}
+- Suing Public Entity: ${c.suingPublicEntity ? "Yes" : "No"}
+- Filed Over 12 Months: ${c.filedOver12 ? "Yes" : "No"}
+- Filed Over $2,500: ${c.filedOver2500 ? "Yes" : "No"}
 - County: ${c.county || "N/A"}
 - Courthouse: ${c.courthouse || "N/A"}
 - Venue Basis: ${c.venueBasis || "N/A"}
+- Intake Complete: ${c.intakeComplete ? "Yes" : "No"}
+- Intake Step: ${c.intakeStep || "N/A"}
+- Demand Letter: ${c.demandLetter ? c.demandLetter.substring(0, 3000) + (c.demandLetter.length > 3000 ? "... [truncated]" : "") : "Not generated yet"}
+- Created: ${c.createdAt || "N/A"}
+- Last Updated: ${c.updatedAt || "N/A"}
 `;
 }
 
@@ -89,11 +104,14 @@ async function buildDocumentContext(caseId: number): Promise<string> {
 
 const SYSTEM_PROMPT_BASE = `You are Small Claims Genie, an AI legal assistant specializing in California Small Claims Court. You help users understand court procedures, prepare their cases, analyze their documents, and provide guidance on small claims matters.
 
+You have FULL ACCESS to the user's case data stored in the database. Below you will find complete case information including plaintiff/defendant details, claim descriptions, amounts, documents, and all other case fields. Use this data to give specific, personalized answers.
+
 Important rules:
 - You are NOT a lawyer and do not provide legal advice. You provide legal information and guidance.
 - Always be helpful, clear, and specific to California small claims court (SC-100 process).
 - When referencing case details or documents, cite specific information from the provided context.
 - When analyzing documents, quote relevant passages and provide practical insights.
+- If the user asks about their case details, refer to the case data provided below.
 - Format responses clearly with bullet points and headers when helpful.
 - Maximum small claims amount is $10,000 for individuals, $5,000 for businesses.
 - Filing fees: $30 (claims ≤$1,500), $50 ($1,500.01-$5,000), $75 (>$5,000-$10,000).`;
@@ -107,11 +125,33 @@ router.post("/ai/ask", requireAuth, async (req, res) => {
     let caseContext = "";
     let documentContext = "";
 
-    if (caseId) {
-      const caseRecord = await getCaseForUser(caseId, userId);
+    if (caseId !== undefined && caseId !== null) {
+      const parsedCaseId = Number(caseId);
+      if (isNaN(parsedCaseId) || parsedCaseId <= 0) {
+        return res.status(400).json({ error: "Invalid caseId" });
+      }
+      const caseRecord = await getCaseForUser(parsedCaseId, userId);
       if (caseRecord) {
         caseContext = buildCaseContext(caseRecord);
-        documentContext = await buildDocumentContext(caseId);
+        documentContext = await buildDocumentContext(parsedCaseId);
+      }
+    } else {
+      const allCases = await db
+        .select()
+        .from(casesTable)
+        .where(eq(casesTable.userId, userId));
+
+      if (allCases.length > 0) {
+        caseContext = allCases.map((c, i) => `--- Case ${i + 1} (ID: ${c.id}) ---\n${buildCaseContext(c)}`).join("\n");
+        let totalDocLen = 0;
+        for (const c of allCases) {
+          if (totalDocLen >= MAX_DOC_CONTEXT) break;
+          const docCtx = await buildDocumentContext(c.id);
+          if (docCtx) {
+            documentContext += docCtx;
+            totalDocLen += docCtx.length;
+          }
+        }
       }
     }
 

@@ -1,34 +1,27 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
 import { db } from "@workspace/db";
 import { casesTable } from "@workspace/db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
+import { requireAuth, type AuthRequest } from "../middlewares/requireAuth";
+import { getCaseForUser } from "../lib/caseHelpers";
 
 const router = Router();
 
-const requireAuth = (req: any, res: any, next: any) => {
-  const auth = getAuth(req);
-  const userId = auth?.sessionClaims?.userId || auth?.userId;
-  if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  req.userId = userId;
-  next();
-};
-
-router.get("/cases", requireAuth, async (req: any, res) => {
+router.get("/cases", requireAuth, async (req, res) => {
   try {
-    const cases = await db.select().from(casesTable).where(eq(casesTable.userId, req.userId)).orderBy(desc(casesTable.updatedAt));
+    const { userId } = req as AuthRequest;
+    const cases = await db.select().from(casesTable).where(eq(casesTable.userId, userId)).orderBy(desc(casesTable.updatedAt));
     res.json(cases);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch cases" });
   }
 });
 
-router.post("/cases", requireAuth, async (req: any, res) => {
+router.post("/cases", requireAuth, async (req, res) => {
   try {
+    const { userId } = req as AuthRequest;
     const [newCase] = await db.insert(casesTable).values({
-      userId: req.userId,
+      userId,
       plaintiffName: req.body.plaintiffName || "",
       claimDescription: req.body.claimDescription || "",
       claimType: req.body.claimType || "",
@@ -40,76 +33,69 @@ router.post("/cases", requireAuth, async (req: any, res) => {
   }
 });
 
-router.get("/cases/:caseId", requireAuth, async (req: any, res) => {
+router.get("/cases/:caseId", requireAuth, async (req, res) => {
   try {
-    const caseId = parseInt(req.params.caseId);
-    const [caseRecord] = await db.select().from(casesTable).where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
-    if (!caseRecord) {
-      return res.status(404).json({ error: "Case not found." });
-    }
+    const { userId } = req as AuthRequest;
+    const caseRecord = await getCaseForUser(parseInt(req.params.caseId), userId);
+    if (!caseRecord) return res.status(404).json({ error: "Case not found." });
     res.json(caseRecord);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch case" });
   }
 });
 
-router.put("/cases/:caseId", requireAuth, async (req: any, res) => {
+router.put("/cases/:caseId", requireAuth, async (req, res) => {
   try {
-    const caseId = parseInt(req.params.caseId);
-    const { userId, id, createdAt, ...safeBody } = req.body;
+    const { userId } = req as AuthRequest;
+    const { userId: _, id, createdAt, ...safeBody } = req.body;
     const [updated] = await db.update(casesTable)
       .set({ ...safeBody, updatedAt: new Date() })
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)))
+      .where(eq(casesTable.id, parseInt(req.params.caseId)))
       .returning();
-    if (!updated) {
-      return res.status(404).json({ error: "Case not found." });
-    }
+    if (!updated) return res.status(404).json({ error: "Case not found." });
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: "Failed to update case" });
   }
 });
 
-router.delete("/cases/:caseId", requireAuth, async (req: any, res) => {
+router.delete("/cases/:caseId", requireAuth, async (req, res) => {
   try {
+    const { userId } = req as AuthRequest;
     const caseId = parseInt(req.params.caseId);
-    const [deleted] = await db.delete(casesTable)
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)))
-      .returning();
-    if (!deleted) {
-      return res.status(404).json({ error: "Case not found." });
-    }
+    const caseRecord = await getCaseForUser(caseId, userId);
+    if (!caseRecord) return res.status(404).json({ error: "Case not found." });
+    await db.delete(casesTable).where(eq(casesTable.id, caseId));
     res.json({ message: "Case deleted" });
   } catch (err) {
     res.status(500).json({ error: "Could not delete the case. Please try again." });
   }
 });
 
-router.put("/cases/:caseId/intake", requireAuth, async (req: any, res) => {
+router.put("/cases/:caseId/intake", requireAuth, async (req, res) => {
   try {
+    const { userId } = req as AuthRequest;
     const caseId = parseInt(req.params.caseId);
-    const { userId, id, createdAt, ...safeBody } = req.body;
+    const caseRecord = await getCaseForUser(caseId, userId);
+    if (!caseRecord) return res.status(404).json({ error: "Case not found." });
+    const { userId: _, id, createdAt, ...safeBody } = req.body;
     const [updated] = await db.update(casesTable)
       .set({ ...safeBody, updatedAt: new Date() })
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)))
+      .where(eq(casesTable.id, caseId))
       .returning();
-    if (!updated) {
-      return res.status(404).json({ error: "Case not found." });
-    }
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: "Could not save progress" });
   }
 });
 
-router.post("/cases/:caseId/demand-letter", requireAuth, async (req: any, res) => {
+router.post("/cases/:caseId/demand-letter", requireAuth, async (req, res) => {
   try {
+    const { userId } = req as AuthRequest;
     const caseId = parseInt(req.params.caseId);
     const tone = req.body?.tone || "formal";
-    const [caseRecord] = await db.select().from(casesTable).where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
-    if (!caseRecord) {
-      return res.status(404).json({ error: "Case not found." });
-    }
+    const c = await getCaseForUser(caseId, userId);
+    if (!c) return res.status(404).json({ error: "Case not found." });
 
     const { openai } = await import("@workspace/integrations-openai-ai-server");
 
@@ -144,24 +130,24 @@ FORMATTING RULES:
     const userPrompt = `Generate a demand letter with the following case details:
 
 PLAINTIFF:
-- Name: ${caseRecord.plaintiffName || "[Plaintiff Name]"}
-- Address: ${caseRecord.plaintiffAddress || "[Address]"}
-- City/State/Zip: ${caseRecord.plaintiffCity || "[City]"}, ${caseRecord.plaintiffState || "CA"} ${caseRecord.plaintiffZip || "[Zip]"}
-- Phone: ${caseRecord.plaintiffPhone || "[Phone]"}
+- Name: ${c.plaintiffName || "[Plaintiff Name]"}
+- Address: ${c.plaintiffAddress || "[Address]"}
+- City/State/Zip: ${c.plaintiffCity || "[City]"}, ${c.plaintiffState || "CA"} ${c.plaintiffZip || "[Zip]"}
+- Phone: ${c.plaintiffPhone || "[Phone]"}
 
 DEFENDANT:
-- Name: ${caseRecord.defendantName || "[Defendant Name]"}
-- Address: ${caseRecord.defendantAddress || "[Address]"}
-- City/State/Zip: ${caseRecord.defendantCity || "[City]"}, ${caseRecord.defendantState || "CA"} ${caseRecord.defendantZip || "[Zip]"}
+- Name: ${c.defendantName || "[Defendant Name]"}
+- Address: ${c.defendantAddress || "[Address]"}
+- City/State/Zip: ${c.defendantCity || "[City]"}, ${c.defendantState || "CA"} ${c.defendantZip || "[Zip]"}
 
 CLAIM DETAILS:
-- Type: ${caseRecord.claimType || "General Claim"}
-- Amount: $${caseRecord.amountClaimed || "0"}
-- Description: ${caseRecord.claimDescription || "[No description provided]"}
-- How Amount Calculated: ${caseRecord.howAmountCalculated || "[Not specified]"}
-- Incident Date: ${caseRecord.incidentDateStart || "[Not specified]"}${caseRecord.incidentDateEnd ? ` to ${caseRecord.incidentDateEnd}` : ""}
-- Prior Demand Made: ${caseRecord.demandMade ? "Yes" : "No"}
-- Demand Details: ${caseRecord.demandDescription || "N/A"}
+- Type: ${c.claimType || "General Claim"}
+- Amount: $${c.amountClaimed || "0"}
+- Description: ${c.claimDescription || "[No description provided]"}
+- How Amount Calculated: ${c.howAmountCalculated || "[Not specified]"}
+- Incident Date: ${c.incidentDateStart || "[Not specified]"}${c.incidentDateEnd ? ` to ${c.incidentDateEnd}` : ""}
+- Prior Demand Made: ${c.demandMade ? "Yes" : "No"}
+- Demand Details: ${c.demandDescription || "N/A"}
 
 Today's Date: ${today.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
 
@@ -178,7 +164,7 @@ Today's Date: ${today.toLocaleDateString("en-US", { month: "long", day: "numeric
 
     await db.update(casesTable)
       .set({ demandLetter: letter, updatedAt: new Date() })
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
+      .where(eq(casesTable.id, caseId));
 
     res.json({ demandLetter: letter });
   } catch (err: any) {

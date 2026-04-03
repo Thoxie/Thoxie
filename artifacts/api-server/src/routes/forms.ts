@@ -1,21 +1,12 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
 import { db } from "@workspace/db";
-import { casesTable, documentsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { documentsTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { PDFDocument, StandardFonts, rgb, PDFPage, PDFFont } from "pdf-lib";
+import { requireAuth, type AuthRequest } from "../middlewares/requireAuth";
+import { getCaseForUser } from "../lib/caseHelpers";
 
 const router = Router();
-
-const requireAuth = (req: any, res: any, next: any) => {
-  const auth = getAuth(req);
-  const userId = auth?.sessionClaims?.userId || auth?.userId;
-  if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
-  req.userId = userId;
-  next();
-};
 
 function fmt(date: string | null | undefined): string {
   if (!date) return "";
@@ -65,14 +56,19 @@ function drawCheckBox(page: PDFPage, x: number, y: number, checked: boolean, fon
   }
 }
 
+function numCircle(page: PDFPage, n: string, x: number, y: number, bold: PDFFont) {
+  page.drawCircle({ x: x + 5, y: y + 3, size: 8, borderColor: BLACK, borderWidth: 0.7, color: rgb(1, 1, 1) });
+  page.drawText(n, { x: x + 2, y: y, size: 9, font: bold, color: BLACK });
+}
+
 const MAX_DESC_LINES = 5;
 const MAX_CALC_LINES = 4;
 
-router.get("/cases/:caseId/forms/sc100", requireAuth, async (req: any, res) => {
+router.get("/cases/:caseId/forms/sc100", requireAuth, async (req, res) => {
   try {
+    const { userId } = req as AuthRequest;
     const caseId = parseInt(req.params.caseId);
-    const [c] = await db.select().from(casesTable)
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
+    const c = await getCaseForUser(caseId, userId);
     if (!c) return res.status(404).json({ error: "Case not found." });
 
     const pdfDoc = await PDFDocument.create();
@@ -247,12 +243,8 @@ function buildPage2(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   const page = pdfDoc.addPage([PW, PH]);
   let Y = pageHeader(page, font, bold, c.plaintiffName || "", "");
 
-  const numCircle = (n: string, x: number, y: number) => {
-    page.drawCircle({ x: x + 5, y: y + 3, size: 8, borderColor: BLACK, borderWidth: 0.7, color: rgb(1, 1, 1) });
-    page.drawText(n, { x: x + 2, y: y, size: 9, font: bold, color: BLACK });
-  };
 
-  numCircle("1", ML, Y);
+  numCircle(page, "1", ML, Y, bold);
   page.drawText("The plaintiff (the person, business, or public entity that is suing) is:", { x: ML + 20, y: Y, size: fs, font: bold, color: BLACK });
   Y -= 16;
   page.drawText("Name:", { x: ML + 20, y: Y, size: sfs, font, color: GRAY });
@@ -316,7 +308,7 @@ function buildPage2(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("2", ML, Y);
+  numCircle(page, "2", ML, Y, bold);
   page.drawText("The defendant (the person, business, or public entity being sued) is:", { x: ML + 20, y: Y, size: fs, font: bold, color: BLACK });
   Y -= 16;
   page.drawText("Name:", { x: ML + 20, y: Y, size: sfs, font, color: GRAY });
@@ -368,7 +360,7 @@ function buildPage2(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("3", ML, Y);
+  numCircle(page, "3", ML, Y, bold);
   page.drawText("The plaintiff claims the defendant owes $", { x: ML + 20, y: Y, size: fs, font: bold, color: BLACK });
   page.drawText(c.amountClaimed || "0.00", { x: ML + 230, y: Y, size: fs, font: bold, color: BLACK });
   page.drawText(". (Explain below and on next page.)", { x: ML + 300, y: Y, size: fs, font, color: BLACK });
@@ -389,12 +381,8 @@ function buildPage3(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   const page = pdfDoc.addPage([PW, PH]);
   let Y = pageHeader(page, font, bold, c.plaintiffName || "", "");
 
-  const numCircle = (n: string, x: number, y: number) => {
-    page.drawCircle({ x: x + 5, y: y + 3, size: 8, borderColor: BLACK, borderWidth: 0.7, color: rgb(1, 1, 1) });
-    page.drawText(n, { x: x + 2, y: y, size: 9, font: bold, color: BLACK });
-  };
 
-  numCircle("3", ML, Y);
+  numCircle(page, "3", ML, Y, bold);
   page.drawText("b. When did this happen? (Date):", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
   page.drawText(fmt(c.incidentDateStart), { x: ML + 175, y: Y, size: fs, font, color: BLACK });
   Y -= 14;
@@ -422,7 +410,7 @@ function buildPage3(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("4", ML, Y);
+  numCircle(page, "4", ML, Y, bold);
   page.drawText("You must ask the defendant (in person, in writing, or by phone) to pay you before you", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
   Y -= 11;
   page.drawText("sue. If your claim is for possession of property, you must ask the defendant to give you", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
@@ -447,7 +435,7 @@ function buildPage3(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("5", ML, Y);
+  numCircle(page, "5", ML, Y, bold);
   page.drawText("Why are you filing your claim at this courthouse?", { x: ML + 20, y: Y, size: fs, font: bold, color: BLACK });
   Y -= 14;
   page.drawText("This courthouse covers the area (check the one that applies):", { x: ML + 20, y: Y, size: sfs, font, color: BLACK });
@@ -493,7 +481,7 @@ function buildPage3(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("6", ML, Y);
+  numCircle(page, "6", ML, Y, bold);
   page.drawText("List the zip code of the place checked in 5 above (if you know):", { x: ML + 20, y: Y, size: sfs, font, color: BLACK });
   page.drawText(c.plaintiffZip || "", { x: ML + 310, y: Y, size: fs, font, color: BLACK });
   Y -= 18;
@@ -501,7 +489,7 @@ function buildPage3(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("7", ML, Y);
+  numCircle(page, "7", ML, Y, bold);
   page.drawText("Is your claim about an attorney-client fee dispute?", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
   drawCheckBox(page, ML + 270, Y, c.disputeAttorneyFees === true, font);
   page.drawText("Yes", { x: ML + 284, y: Y, size: sfs, font, color: BLACK });
@@ -515,7 +503,7 @@ function buildPage3(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("8", ML, Y);
+  numCircle(page, "8", ML, Y, bold);
   page.drawText("Are you suing a public entity?", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
   drawCheckBox(page, ML + 170, Y, c.suingPublicEntity === true, font);
   page.drawText("Yes", { x: ML + 184, y: Y, size: sfs, font, color: BLACK });
@@ -533,12 +521,8 @@ function buildPage4(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   const page = pdfDoc.addPage([PW, PH]);
   let Y = pageHeader(page, font, bold, c.plaintiffName || "", "");
 
-  const numCircle = (n: string, x: number, y: number) => {
-    page.drawCircle({ x: x + 5, y: y + 3, size: 8, borderColor: BLACK, borderWidth: 0.7, color: rgb(1, 1, 1) });
-    page.drawText(n, { x: x + 1, y: y, size: 9, font: bold, color: BLACK });
-  };
 
-  numCircle("9", ML, Y);
+  numCircle(page, "9", ML, Y, bold);
   page.drawText("Have you filed more than 12 other small claims within the last 12 months in California?", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
   Y -= 14;
   drawCheckBox(page, ML + 30, Y, c.filedOver12 === true, font);
@@ -551,7 +535,7 @@ function buildPage4(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("10", ML, Y);
+  numCircle(page, "10", ML, Y, bold);
   page.drawText("Is your claim for more than $2,500?", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
   const over2500 = parseFloat(c.amountClaimed || "0") > 2500;
   drawCheckBox(page, ML + 200, Y, over2500, font);
@@ -567,7 +551,7 @@ function buildPage4(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawLine({ start: { x: ML, y: Y }, end: { x: PW - MR, y: Y }, thickness: 0.5, color: BLACK });
   Y -= 16;
 
-  numCircle("11", ML, Y);
+  numCircle(page, "11", ML, Y, bold);
   page.drawText("I understand that by filing a claim in small claims court, I have no right to appeal this", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
   Y -= 11;
   page.drawText("claim.", { x: ML + 20, y: Y, size: sfs, font: bold, color: BLACK });
@@ -657,11 +641,11 @@ function buildMC031(pdfDoc: PDFDocument, c: any, font: PDFFont, bold: PDFFont, i
   page.drawText("MC-031 — Attachment to SC-100, Item 3", { x: ML, y: 38, size: 7, font, color: GRAY });
 }
 
-router.get("/cases/:caseId/forms/sc100.docx", requireAuth, async (req: any, res) => {
+router.get("/cases/:caseId/forms/sc100.docx", requireAuth, async (req, res) => {
   try {
+    const { userId } = req as AuthRequest;
     const caseId = parseInt(req.params.caseId);
-    const [c] = await db.select().from(casesTable)
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
+    const c = await getCaseForUser(caseId, userId);
     if (!c) return res.status(404).json({ error: "Case not found." });
 
     const {
@@ -900,11 +884,11 @@ router.get("/cases/:caseId/forms/sc100.docx", requireAuth, async (req: any, res)
   }
 });
 
-router.get("/cases/:caseId/forms/readiness", requireAuth, async (req: any, res) => {
+router.get("/cases/:caseId/forms/readiness", requireAuth, async (req, res) => {
   try {
+    const { userId } = req as AuthRequest;
     const caseId = parseInt(req.params.caseId);
-    const [c] = await db.select().from(casesTable)
-      .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
+    const c = await getCaseForUser(caseId, userId);
     if (!c) return res.status(404).json({ error: "Case not found." });
 
     const docs = await db.select().from(documentsTable).where(eq(documentsTable.caseId, caseId));

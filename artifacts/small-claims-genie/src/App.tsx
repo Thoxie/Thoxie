@@ -64,28 +64,11 @@ function HomeRedirect() {
   );
 }
 
-function DashboardRoute() {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Show when="signed-in">
-        <Dashboard />
-      </Show>
-      <Show when="signed-out">
-        <Redirect to="/sign-in" />
-      </Show>
-    </>
-  );
-}
-
-function CaseDetailRoute({ id }: { id: string }) {
-  return (
-    <>
-      <Show when="signed-in">
-        <CaseDetail id={id} />
-      </Show>
-      <Show when="signed-out">
-        <Redirect to="/sign-in" />
-      </Show>
+      <Show when="signed-in">{children}</Show>
+      <Show when="signed-out"><Redirect to="/sign-in" /></Show>
     </>
   );
 }
@@ -127,19 +110,14 @@ function ClerkProviderWithRoutes() {
         <TooltipProvider>
           <Switch>
             <Route path="/" component={HomeRedirect} />
-            <Route path="/dashboard" component={DashboardRoute} />
+            <Route path="/dashboard">
+              <ProtectedRoute><Dashboard /></ProtectedRoute>
+            </Route>
             <Route path="/cases/new">
-              <>
-                <Show when="signed-in">
-                  <StartCase />
-                </Show>
-                <Show when="signed-out">
-                  <Redirect to="/sign-up" />
-                </Show>
-              </>
+              <ProtectedRoute><StartCase /></ProtectedRoute>
             </Route>
             <Route path="/cases/:id">
-              {(params) => <CaseDetailRoute id={params.id} />}
+              {(params) => <ProtectedRoute><CaseDetail id={params.id} /></ProtectedRoute>}
             </Route>
             <Route path="/how-it-works" component={HowItWorks} />
             <Route path="/types-of-cases" component={TypesOfCases} />

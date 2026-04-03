@@ -73,7 +73,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3">
             <p className="text-sm text-primary/60">
-              &copy; {new Date().getFullYear()} Small Claims Genie. Not a law firm.
+              &copy; {new Date().getFullYear()} Small Claims Genie. Not a law firm. Legal advice only.
             </p>
             <div className="flex items-center gap-4">
               <Link href="/terms-of-service" className="text-sm text-primary/60 hover:text-primary underline underline-offset-2 transition-colors">

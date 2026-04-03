@@ -17,7 +17,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
-      <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/50">
+      <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <img src={`${basePath}/logo.png`} alt="Small Claims Genie" className="h-12 w-auto" />
@@ -66,35 +66,20 @@ export function PublicLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 flex flex-col">
         {children}
       </main>
-      <footer className="bg-navy text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            <div>
-              <img src={`${basePath}/logo.png`} alt="Small Claims Genie" className="h-10 w-auto brightness-200 mb-3" />
-              <p className="text-sm text-white/60 max-w-xs">
-                Professional guided preparation for California Small Claims Court. Not a law firm.
-              </p>
+      <footer className="py-8" style={{ backgroundColor: "#ddf6f3" }}>
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3">
+            <p className="text-sm text-primary/60">
+              &copy; {new Date().getFullYear()} Small Claims Genie. Not a law firm.
+            </p>
+            <div className="flex items-center gap-4">
+              <Link href="/disclaimers" className="text-sm text-primary/60 hover:text-primary underline underline-offset-2 transition-colors">
+                Disclaimers
+              </Link>
+              <Link href="/contact" className="text-sm text-primary/60 hover:text-primary underline underline-offset-2 transition-colors">
+                Contact
+              </Link>
             </div>
-            <div className="flex flex-col sm:flex-row gap-8">
-              <div>
-                <h4 className="font-bold text-sm mb-3">Navigate</h4>
-                <div className="flex flex-col gap-2 text-sm text-white/70">
-                  <Link href="/" className="hover:text-white">Home</Link>
-                  <Link href="/faq" className="hover:text-white">FAQ</Link>
-                  <Link href="/resources" className="hover:text-white">Resources</Link>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-sm mb-3">Legal</h4>
-                <div className="flex flex-col gap-2 text-sm text-white/70">
-                  <Link href="/disclaimers" className="hover:text-white">Disclaimers</Link>
-                  <Link href="/contact" className="hover:text-white">Contact</Link>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-white/10 mt-8 pt-6 text-center text-xs text-white/40">
-            &copy; {new Date().getFullYear()} Small Claims Genie. All rights reserved. Not a law firm.
           </div>
         </div>
       </footer>

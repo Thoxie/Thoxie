@@ -32,7 +32,7 @@ export default function Home() {
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-white rounded-xl p-6 border border-border/60">
-              <div className="h-10 w-10 bg-mint-dark rounded-lg flex items-center justify-center mb-4">
+              <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <FileText className="h-5 w-5 text-navy" />
               </div>
               <h3 className="text-lg font-bold text-navy mb-2">Court-Ready Intake Forms</h3>
@@ -41,7 +41,7 @@ export default function Home() {
               </p>
             </div>
             <div className="bg-white rounded-xl p-6 border border-border/60">
-              <div className="h-10 w-10 bg-mint-dark rounded-lg flex items-center justify-center mb-4">
+              <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Upload className="h-5 w-5 text-navy" />
               </div>
               <h3 className="text-lg font-bold text-navy mb-2">Evidence That Speaks for You</h3>
@@ -50,7 +50,7 @@ export default function Home() {
               </p>
             </div>
             <div className="bg-white rounded-xl p-6 border border-border/60">
-              <div className="h-10 w-10 bg-mint-dark rounded-lg flex items-center justify-center mb-4">
+              <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <ClipboardCheck className="h-5 w-5 text-navy" />
               </div>
               <h3 className="text-lg font-bold text-navy mb-2">Filing Guidance & Checklists</h3>
@@ -106,7 +106,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="types-of-cases" className="py-16 bg-mint-dark/50 border-t border-border/50">
+      <section id="types-of-cases" className="py-16 bg-muted/50 border-t border-border/50">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-navy mb-2">Types of Cases We Handle</h2>

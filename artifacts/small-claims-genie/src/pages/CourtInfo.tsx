@@ -127,7 +127,7 @@ export default function CourtInfo() {
 
           <div className="mb-14">
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-8 w-8 bg-mint-dark rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <FileText className="h-4 w-4 text-navy" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-navy">Official Court Forms</h2>
@@ -141,7 +141,7 @@ export default function CourtInfo() {
 
           <div className="mb-14">
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-8 w-8 bg-mint-dark rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Scale className="h-4 w-4 text-navy" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-navy">California Courts Self-Help</h2>
@@ -155,7 +155,7 @@ export default function CourtInfo() {
 
           <div className="mb-14">
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-8 w-8 bg-mint-dark rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <BookOpen className="h-4 w-4 text-navy" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-navy">Know the Rules</h2>
@@ -169,7 +169,7 @@ export default function CourtInfo() {
 
           <div className="mb-14">
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-8 w-8 bg-mint-dark rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-primary/10 rounded-lg flex items-center justify-center">
                 <HelpCircle className="h-4 w-4 text-navy" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-navy">Common FAQs</h2>

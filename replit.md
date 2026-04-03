@@ -20,7 +20,7 @@ pnpm workspace monorepo. A guided legal form assistant for California Small Clai
 - **Routing**: Wouter
 - **UI Components**: shadcn/ui (Radix primitives)
 - **Font**: Plus Jakarta Sans
-- **Theme**: Navy (`hsl(220 60% 25%)`) + Gold (`hsl(40 95% 55%)`) + Orange CTA (`hsl(18 90% 55%)`) + Mint background (`hsl(160 30% 95%)`)
+- **Theme**: White background (`hsl(0 0% 100%)`) + Navy primary (`hsl(220 60% 25%)`) + Gold accent (`hsl(40 95% 55%)`) + Orange CTA (`hsl(18 90% 55%)`) + Footer teal (`#ddf6f3`)
 - **AI**: OpenAI via Replit AI Integrations proxy (`gpt-4o-mini` for chat/letters, `gpt-4o-mini-transcribe` for STT)
 - **PDF**: jspdf (client-side demand letter PDF), pdf-lib (server-side SC-100 auto-fill)
 

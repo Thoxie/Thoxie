@@ -17,7 +17,7 @@ export default function Home() {
             demand letters and your court-ready forms, ready to file. No lawyer needed.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/sign-up" className="inline-flex h-12 items-center justify-center rounded-full bg-[#2ecc71] hover:bg-[#27ae60] px-8 text-base font-bold text-white shadow transition-colors gap-2">
+            <Link href="/sign-up" className="inline-flex h-12 items-center justify-center rounded-full bg-amber-500 hover:bg-amber-600 px-8 text-base font-bold text-white shadow-lg shadow-amber-200 transition-colors gap-2">
               <Sparkles className="h-4 w-4" />
               Start Your Case Free
             </Link>

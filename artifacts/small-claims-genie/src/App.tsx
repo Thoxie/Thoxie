@@ -12,6 +12,8 @@ import CourtInfo from "@/pages/CourtInfo";
 import FAQ from "@/pages/FAQ";
 import Contact from "@/pages/Contact";
 import Disclaimers from "@/pages/Disclaimers";
+import TermsOfService from "@/pages/TermsOfService";
+import UserAgreement from "@/pages/UserAgreement";
 import CaseDetail from "@/pages/CaseDetail";
 import HowItWorks from "@/pages/HowItWorks";
 import TypesOfCases from "@/pages/TypesOfCases";
@@ -145,6 +147,8 @@ function ClerkProviderWithRoutes() {
             <Route path="/faq" component={FAQ} />
             <Route path="/contact" component={Contact} />
             <Route path="/disclaimers" component={Disclaimers} />
+            <Route path="/terms-of-service" component={TermsOfService} />
+            <Route path="/user-agreement" component={UserAgreement} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
             <Route component={NotFound} />

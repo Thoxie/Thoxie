@@ -76,11 +76,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               &copy; {new Date().getFullYear()} Small Claims Genie. Not a law firm. Legal advice only.
             </p>
             <div className="flex items-center gap-4">
-              <Link href="/terms-of-service" className="text-sm text-primary/60 hover:text-primary underline underline-offset-2 transition-colors">
+              <Link href="/terms" className="text-sm text-primary/60 hover:text-primary underline underline-offset-2 transition-colors">
                 Terms of Use
               </Link>
-              <Link href="/user-agreement" className="text-sm text-primary/60 hover:text-primary underline underline-offset-2 transition-colors">
-                User Agreement
+              <Link href="/tos" className="text-sm text-primary/60 hover:text-primary underline underline-offset-2 transition-colors">
+                Terms of Service
               </Link>
             </div>
           </div>

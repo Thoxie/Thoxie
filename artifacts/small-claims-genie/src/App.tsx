@@ -147,8 +147,8 @@ function ClerkProviderWithRoutes() {
             <Route path="/faq" component={FAQ} />
             <Route path="/contact" component={Contact} />
             <Route path="/disclaimers" component={Disclaimers} />
-            <Route path="/terms-of-service" component={TermsOfService} />
-            <Route path="/user-agreement" component={UserAgreement} />
+            <Route path="/terms" component={UserAgreement} />
+            <Route path="/tos" component={TermsOfService} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
             <Route component={NotFound} />

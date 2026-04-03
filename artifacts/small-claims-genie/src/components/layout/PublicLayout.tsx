@@ -31,9 +31,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-colors hover:text-primary hover:bg-primary/5 ${
+                  className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold transition-colors hover:text-primary hover:bg-gray-100 ${
                     isActive
-                      ? "text-primary bg-primary/5"
+                      ? "text-primary bg-gray-100"
                       : "text-muted-foreground"
                   }`}
                 >

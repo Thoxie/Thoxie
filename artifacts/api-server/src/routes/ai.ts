@@ -1,5 +1,9 @@
 import { Router } from "express";
 import { getAuth } from "@clerk/express";
+import { openai } from "@workspace/integrations-openai-ai-server";
+import { db } from "@workspace/db";
+import { casesTable, documentsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 
 const router = Router();
 
@@ -13,39 +17,107 @@ const requireAuth = (req: any, res: any, next: any) => {
   next();
 };
 
-const FAQ_ANSWERS: Record<string, string> = {
-  "lawyer": "Lawyers are not allowed in California Small Claims Court. You represent yourself. However, you can consult with a lawyer before your hearing to prepare your case.",
-  "cost": "Filing fees in California Small Claims Court range from $30 to $75 depending on the amount you're claiming. If you're claiming $1,500 or less, the fee is $30. For claims between $1,500.01 and $5,000, the fee is $50. For claims over $5,000 up to $10,000, the fee is $75.",
-  "how long": "A small claims case typically takes 30 to 70 days from filing to hearing. After the hearing, the judge usually makes a decision immediately or within a few days.",
-  "file": "To file a small claims case in California, you need to: 1) Fill out the SC-100 Plaintiff's Claim form, 2) File it with the clerk of the court in the correct county, 3) Pay the filing fee, 4) Have the defendant served with a copy of your claim.",
-  "serve": "You must serve the defendant at least 15 days before the hearing (or 20 days if outside the county). You CANNOT serve the papers yourself. Use a friend over 18, a process server, or the sheriff's office.",
-  "win": "If you win, the judge will issue a judgment in your favor. The defendant has 30 days to appeal. If they don't appeal, you can begin collecting the judgment. Methods include wage garnishment, bank levy, or property lien.",
-  "appeal": "In California Small Claims Court, the defendant can appeal within 30 days of the judgment. The plaintiff CANNOT appeal — they chose this court. An appeal results in a new trial in Superior Court.",
-  "limit": "The maximum amount you can sue for in California Small Claims Court is $10,000 for individuals and $5,000 for businesses or other entities.",
-  "strong case": "A strong small claims case typically has: 1) Clear documentation (contracts, receipts, photos, messages), 2) A specific dollar amount you can justify, 3) Evidence that you tried to resolve the matter before filing, 4) A claim within the statute of limitations.",
-  "settle": "Yes, you can settle at any time before or even during the hearing. Many cases settle once the defendant receives the claim. If you settle, put the agreement in writing and file a dismissal with the court.",
-};
-
 router.post("/ai/ask", requireAuth, async (req: any, res) => {
   try {
-    const { question } = req.body;
+    const { question, caseId } = req.body;
     if (!question) {
       return res.status(400).json({ error: "Question is required" });
     }
 
-    const lowerQ = question.toLowerCase();
-    let answer = "I appreciate your question! While I can provide general information about California Small Claims Court procedures, I recommend consulting the California Courts Self-Help website (courts.ca.gov/selfhelp-smallclaims.htm) for the most current information. You can also visit your local Small Claims Advisor for free guidance before filing.\n\nFor specific legal advice about your situation, consider consulting with a licensed attorney.";
+    let caseContext = "";
+    let documentContext = "";
 
-    for (const [key, value] of Object.entries(FAQ_ANSWERS)) {
-      if (lowerQ.includes(key)) {
-        answer = value;
-        break;
+    if (caseId) {
+      const [caseRecord] = await db.select().from(casesTable)
+        .where(and(eq(casesTable.id, caseId), eq(casesTable.userId, req.userId)));
+
+      if (caseRecord) {
+        caseContext = `
+CASE INFORMATION:
+- Case Title: ${caseRecord.claimDescription || "N/A"}
+- Plaintiff: ${caseRecord.plaintiffName || "N/A"}, ${caseRecord.plaintiffAddress || ""} ${caseRecord.plaintiffCity || ""}, ${caseRecord.plaintiffState || "CA"} ${caseRecord.plaintiffZip || ""}
+- Plaintiff Phone: ${caseRecord.plaintiffPhone || "N/A"}
+- Defendant: ${caseRecord.defendantName || "N/A"}, ${caseRecord.defendantAddress || ""} ${caseRecord.defendantCity || ""}, ${caseRecord.defendantState || "CA"} ${caseRecord.defendantZip || ""}
+- Claim Type: ${caseRecord.claimType || "N/A"}
+- Amount Claimed: $${caseRecord.amountClaimed || "N/A"}
+- Incident Date: ${caseRecord.incidentDateStart || "N/A"}${caseRecord.incidentDateEnd ? ` to ${caseRecord.incidentDateEnd}` : ""}
+- What Happened: ${caseRecord.claimDescription || "N/A"}
+- How Amount Calculated: ${caseRecord.howAmountCalculated || "N/A"}
+- Demand Made: ${caseRecord.demandMade ? "Yes" : "No"}
+- Demand Description: ${caseRecord.demandDescription || "N/A"}
+- County: ${caseRecord.county || "N/A"}
+- Courthouse: ${caseRecord.courthouse || "N/A"}
+- Venue Basis: ${caseRecord.venueBasis || "N/A"}
+`;
+
+        const docs = await db.select({
+          fileName: documentsTable.fileName,
+          textContent: documentsTable.textContent,
+        }).from(documentsTable).where(eq(documentsTable.caseId, caseId));
+
+        if (docs.length > 0) {
+          const docTexts = docs
+            .filter(d => d.textContent)
+            .map(d => `--- Document: ${d.fileName} ---\n${d.textContent!.substring(0, 8000)}`)
+            .join("\n\n");
+
+          if (docTexts) {
+            documentContext = `\nUPLOADED DOCUMENTS:\n${docTexts}\n`;
+          }
+        }
       }
     }
 
+    const systemPrompt = `You are Small Claims Genie, an AI legal assistant specializing in California Small Claims Court. You help users understand court procedures, prepare their cases, analyze their documents, and provide guidance on small claims matters.
+
+Important rules:
+- You are NOT a lawyer and do not provide legal advice. You provide legal information and guidance.
+- Always be helpful, clear, and specific to California small claims court (SC-100 process).
+- When referencing case details or documents, cite specific information from the provided context.
+- When analyzing documents, quote relevant passages and provide practical insights.
+- Format responses clearly with bullet points and headers when helpful.
+- Maximum small claims amount is $10,000 for individuals, $5,000 for businesses.
+- Filing fees: $30 (claims ≤$1,500), $50 ($1,500.01-$5,000), $75 (>$5,000-$10,000).
+
+${caseContext}${documentContext}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: question },
+      ],
+      max_completion_tokens: 8192,
+    });
+
+    const answer = response.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again.";
     res.json({ answer });
-  } catch (err) {
+  } catch (err: any) {
+    console.error("AI ask error:", err?.message || err);
     res.status(500).json({ error: "An unexpected error occurred. Please try again." });
+  }
+});
+
+router.post("/ai/transcribe", requireAuth, async (req: any, res) => {
+  try {
+    const { audioData } = req.body;
+    if (!audioData) {
+      return res.status(400).json({ error: "Audio data is required" });
+    }
+
+    const buffer = Buffer.from(audioData, "base64");
+    const file = new File([buffer], "recording.webm", { type: "audio/webm" });
+
+    const transcription = await openai.audio.transcriptions.create({
+      model: "gpt-4o-mini-transcribe",
+      file,
+      response_format: "json",
+    });
+
+    res.json({ text: transcription.text || "" });
+  } catch (err: any) {
+    console.error("Transcription error:", err?.message || err);
+    res.status(500).json({ error: "Failed to transcribe audio" });
   }
 });
 

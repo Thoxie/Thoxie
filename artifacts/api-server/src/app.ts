@@ -34,7 +34,7 @@ const allowedOrigins = process.env.NODE_ENV === "production"
   ? [process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : ""].filter(Boolean)
   : true;
 app.use(cors({ credentials: true, origin: allowedOrigins as any }));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(clerkMiddleware());

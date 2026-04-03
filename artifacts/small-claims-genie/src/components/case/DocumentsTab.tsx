@@ -38,14 +38,20 @@ export function DocumentsTab({ caseId }: { caseId: number }) {
 
   const handleFiles = useCallback((files: FileList) => {
     Array.from(files).forEach(file => {
-      uploadMutation.mutate({
-        caseId,
-        data: {
-          fileName: file.name,
-          fileType: file.type || "application/octet-stream",
-          fileSize: file.size,
-        }
-      });
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(",")[1] || "";
+        uploadMutation.mutate({
+          caseId,
+          data: {
+            fileName: file.name,
+            fileType: file.type || "application/octet-stream",
+            fileSize: file.size,
+            fileData: base64,
+          }
+        });
+      };
+      reader.readAsDataURL(file);
     });
   }, [caseId, uploadMutation]);
 

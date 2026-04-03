@@ -16,6 +16,36 @@ const requireAuth = (req: any, res: any, next: any) => {
   next();
 };
 
+async function extractText(fileData: string, fileName: string, fileType: string): Promise<string> {
+  try {
+    const buffer = Buffer.from(fileData, "base64");
+
+    if (fileType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf")) {
+      const pdfParse = (await import("pdf-parse")).default;
+      const result = await pdfParse(buffer);
+      return result.text || "";
+    }
+
+    if (
+      fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      fileName.toLowerCase().endsWith(".docx")
+    ) {
+      const mammoth = await import("mammoth");
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value || "";
+    }
+
+    if (fileType.startsWith("text/")) {
+      return buffer.toString("utf-8");
+    }
+
+    return "";
+  } catch (err) {
+    console.error("Text extraction error:", err);
+    return "";
+  }
+}
+
 router.get("/cases/:caseId/documents", requireAuth, async (req: any, res) => {
   try {
     const caseId = parseInt(req.params.caseId);
@@ -44,12 +74,20 @@ router.post("/cases/:caseId/documents", requireAuth, async (req: any, res) => {
     if (!caseRecord) {
       return res.status(404).json({ error: "Case not found." });
     }
+
+    const { fileName, fileType, fileSize, fileData } = req.body;
+    let textContent = "";
+    if (fileData) {
+      textContent = await extractText(fileData, fileName, fileType);
+    }
+
     const [doc] = await db.insert(documentsTable).values({
       caseId,
-      fileName: req.body.fileName,
-      fileType: req.body.fileType,
-      fileSize: req.body.fileSize,
-      fileData: req.body.fileData || null,
+      fileName,
+      fileType,
+      fileSize,
+      fileData: fileData || null,
+      textContent: textContent || null,
     }).returning();
     res.status(201).json({
       id: doc.id,

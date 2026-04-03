@@ -10,6 +10,7 @@ export const documentsTable = pgTable("documents", {
   fileType: text("file_type").notNull(),
   fileSize: integer("file_size").notNull(),
   fileData: text("file_data"),
+  textContent: text("text_content"),
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
 });
 

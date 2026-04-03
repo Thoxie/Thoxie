@@ -22,7 +22,8 @@ pnpm workspace monorepo. A guided legal form assistant for California Small Clai
 - **Font**: Plus Jakarta Sans
 - **Theme**: White background (`hsl(0 0% 100%)`) + Navy primary (`hsl(220 60% 25%)`) + Gold accent (`hsl(40 95% 55%)`) + Orange CTA (`hsl(18 90% 55%)`) + Footer teal (`#ddf6f3`)
 - **AI**: OpenAI via Replit AI Integrations proxy (`gpt-4o-mini` for chat/letters, `gpt-4o-mini-transcribe` for STT)
-- **PDF**: jspdf (client-side demand letter PDF), pdf-lib (server-side SC-100 auto-fill)
+- **PDF**: jspdf (client-side demand letter PDF), pdf-lib (server-side SC-100 form generation — 4-page faithful replica of official CA form + MC-031 attachment for overflow)
+- **Word**: docx library (server-side SC-100 .docx generation with same structure)
 
 ## Structure
 
